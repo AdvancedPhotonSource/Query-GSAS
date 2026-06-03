@@ -1,0 +1,23 @@
+# Web server
+fastapi>=0.110.0
+uvicorn[standard]>=0.29.0
+python-dotenv>=1.0.0
+pydantic>=2.0.0
+
+# Vector store (local, no network required)
+chromadb>=0.5.0
+
+# Embeddings — runs fully locally, no data leaves the machine
+sentence-transformers>=3.0.0
+
+# Document ingestion
+beautifulsoup4>=4.12.0
+requests>=2.31.0
+pypdf>=4.0.0          # PDF parsing
+lxml>=5.0.0           # faster HTML parser for BeautifulSoup
+
+# Local LLM client (Ollama — default backend)
+httpx>=0.27.0
+
+# Optional: Anthropic Claude API (only needed if LLM_BACKEND=anthropic)
+# anthropic>=0.25.0

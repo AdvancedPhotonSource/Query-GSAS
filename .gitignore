@@ -1,0 +1,23 @@
+# Environment
+.env
+*.env.local
+
+# Vector store (rebuild with ingest.py — do not commit)
+chroma_db/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+*.egg-info/
+dist/
+build/
+
+# macOS
+.DS_Store
+
+# Downloaded PDFs (re-fetched during ingestion)
+*.pdf
