@@ -67,9 +67,16 @@ class Source(BaseModel):
     relevance: float
 
 
+class Citation(BaseModel):
+    title: str
+    section: str
+    url: str
+
+
 class ChatResponse(BaseModel):
     answer: str
     sources: list[Source]
+    citations: dict[str, Citation]
     elapsed_ms: int
 
 
@@ -135,6 +142,7 @@ async def chat(
     return ChatResponse(
         answer=result["answer"],
         sources=result["sources"],
+        citations=result.get("citations", {}),
         elapsed_ms=elapsed,
     )
 

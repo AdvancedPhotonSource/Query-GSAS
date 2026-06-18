@@ -11,16 +11,10 @@ Usage:
 import argparse
 import hashlib
 import io
+import multiprocessing
 import re
 import sys
 import time
-
-import requests
-from bs4 import BeautifulSoup, Tag
-import chromadb
-from sentence_transformers import SentenceTransformer
-
-from sources import TUTORIAL_SOURCES, PDF_SOURCES, WEBPAGE_SOURCES
 
 CHROMA_PATH = "./chroma_db"
 COLLECTION_NAME = "gsasii_docs"
@@ -30,7 +24,8 @@ OVERLAP_CHARS = 150
 REQUEST_DELAY = 0.5  # seconds between HTTP requests
 
 
-def get_collection(reset: bool = False) -> chromadb.Collection:
+def get_collection(reset: bool = False):
+    import chromadb
     client = chromadb.PersistentClient(path=CHROMA_PATH)
     if reset:
         try:
@@ -73,6 +68,7 @@ def chunk_text(text: str, max_chars: int = MAX_CHUNK_CHARS, overlap: int = OVERL
 
 def extract_html_sections(html: str, source_title: str) -> list[dict]:
     """Parse HTML into sections grouped by heading, with text content."""
+    from bs4 import BeautifulSoup, Tag
     soup = BeautifulSoup(html, "html.parser")
 
     # Remove noise
@@ -108,12 +104,13 @@ def extract_html_sections(html: str, source_title: str) -> list[dict]:
     return sections
 
 
-def ingest_html_source(source: dict, collection: chromadb.Collection, model: SentenceTransformer):
+def ingest_html_source(source: dict, collection, model):
     url = source["url"]
     title = source["title"]
     category = source["category"]
 
     print(f"  Fetching: {title}")
+    import requests
     try:
         resp = requests.get(url, timeout=30)
         resp.raise_for_status()
@@ -127,7 +124,7 @@ def ingest_html_source(source: dict, collection: chromadb.Collection, model: Sen
     for section in sections:
         chunks = chunk_text(section["text"])
         for i, chunk in enumerate(chunks):
-            doc_id = hashlib.md5(f"{url}|{section['heading']}|{i}".encode()).hexdigest()
+            doc_id = hashlib.md5(f"{url}|{section['heading']}|{i}|{chunk[:64]}".encode()).hexdigest()
             embedding = model.encode(chunk).tolist()
             ids.append(doc_id)
             docs.append(chunk)
@@ -148,7 +145,7 @@ def ingest_html_source(source: dict, collection: chromadb.Collection, model: Sen
     return len(ids)
 
 
-def ingest_pdf_source(source: dict, collection: chromadb.Collection, model: SentenceTransformer):
+def ingest_pdf_source(source: dict, collection, model):
     try:
         from pypdf import PdfReader
     except ImportError:
@@ -159,6 +156,7 @@ def ingest_pdf_source(source: dict, collection: chromadb.Collection, model: Sent
     title = source["title"]
     category = source["category"]
 
+    import requests
     print(f"  Fetching PDF: {title}")
     try:
         resp = requests.get(url, timeout=60)
@@ -213,6 +211,9 @@ def main():
     parser.add_argument("--reset", action="store_true", help="Drop and rebuild collection")
     args = parser.parse_args()
 
+    from sentence_transformers import SentenceTransformer
+    from sources import TUTORIAL_SOURCES, PDF_SOURCES, WEBPAGE_SOURCES
+
     print("Loading embedding model...")
     model = SentenceTransformer(EMBED_MODEL)
 
@@ -234,4 +235,5 @@ def main():
 
 
 if __name__ == "__main__":
+    multiprocessing.freeze_support()
     main()

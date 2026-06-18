@@ -30,7 +30,10 @@ physicists who need precise, actionable answers.
 Guidelines:
 - Be specific and technical. Use proper crystallographic terminology.
 - When a question involves a step-by-step procedure, preserve the numbered steps.
-- Always cite the source document and section at the end of your answer.
+- Each context section is numbered [1], [2], etc. Cite sources inline as you write \
+  by inserting the number in brackets (e.g. "Open the Phase tab [1] and select..."). \
+  Place the citation immediately after the sentence or clause it supports. Do NOT add \
+  a separate references section at the end.
 - If the provided context does not contain enough information to answer, say so clearly \
   and suggest which tutorial might cover the topic.
 - Do not fabricate parameter names, menu paths, or file formats.
@@ -63,17 +66,23 @@ def _retrieve(question: str) -> tuple[str, list[dict]]:
     )
 
     context_parts = []
+    citations: dict[str, dict] = {}   # num → source info, covers every [N] the LLM may cite
     sources = []
-    seen_sources = set()
+    seen_sources: set = set()
 
-    for doc, meta, dist in zip(
+    for i, (doc, meta, dist) in enumerate(zip(
         results["documents"][0],
         results["metadatas"][0],
         results["distances"][0],
-    ):
+    ), start=1):
         context_parts.append(
-            f"[Source: {meta['title']} | Section: {meta['section']}]\n{doc}"
+            f"[{i}] [Source: {meta['title']} | Section: {meta['section']}]\n{doc}"
         )
+        citations[str(i)] = {
+            "title": meta["title"],
+            "section": meta["section"],
+            "url": meta["url"],
+        }
         source_key = (meta["url"], meta["section"])
         if source_key not in seen_sources:
             seen_sources.add(source_key)
@@ -86,7 +95,7 @@ def _retrieve(question: str) -> tuple[str, list[dict]]:
             })
 
     context = "\n\n---\n\n".join(context_parts)
-    return context, sources
+    return context, sources, citations
 
 
 def _build_messages(question: str, context: str, history: list[dict]) -> list[dict]:
@@ -140,7 +149,7 @@ def answer_question(question: str, history: list[dict]) -> dict:
     if not question.strip():
         return {"answer": "Please enter a question.", "sources": []}
 
-    context, sources = _retrieve(question)
+    context, sources, citations = _retrieve(question)
 
     if not context:
         return {
@@ -149,22 +158,17 @@ def answer_question(question: str, history: list[dict]) -> dict:
                 "to load the GSAS-II documentation."
             ),
             "sources": [],
+            "citations": {},
         }
 
     backend = os.environ.get("LLM_BACKEND", "ollama").lower()
 
     if backend == "retrieval":
-        # No LLM — return top retrieved chunks as-is.
-        # Useful for offline use, testing, or when no LLM is configured.
-        parts = []
-        for s in sources:
-            label = f"[{s['title']}  ›  {s['section']}]"
-            parts.append(label)
         answer = (
             "Most relevant sections (no LLM synthesis — install Ollama or set "
             "LLM_BACKEND=anthropic for generated answers):\n\n" + context
         )
-        return {"answer": answer, "sources": sources}
+        return {"answer": answer, "sources": sources, "citations": citations}
 
     messages = _build_messages(question, context, history)
 
@@ -173,4 +177,4 @@ def answer_question(question: str, history: list[dict]) -> dict:
     else:
         answer = _answer_anthropic(messages)
 
-    return {"answer": answer, "sources": sources}
+    return {"answer": answer, "sources": sources, "citations": citations}

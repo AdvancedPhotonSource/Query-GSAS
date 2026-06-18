@@ -157,6 +157,25 @@
     font-size: .65rem;
   }
 
+  /* ── Inline citation superscripts ────────────────────────────── */
+  .cite-link {
+    color: var(--primary);
+    text-decoration: none;
+    font-size: .72em;
+    font-weight: 600;
+    vertical-align: super;
+    line-height: 0;
+    border: 1px solid var(--primary);
+    border-radius: 3px;
+    padding: 0 3px;
+    margin: 0 1px;
+    transition: background .12s, color .12s;
+  }
+  .cite-link:hover {
+    background: var(--primary);
+    color: #fff;
+  }
+
   /* ── Typing indicator ─────────────────────────────────────── */
   #typing {
     display: none;
@@ -377,7 +396,7 @@ async function sendMessage() {
 
     const data = await res.json();
     hideTyping();
-    appendMessage('bot', data.answer, data.sources || []);
+    appendMessage('bot', data.answer, data.sources || [], data.citations || {});
     history.push({ role: 'assistant', content: data.answer });
   } catch (err) {
     hideTyping();
@@ -409,13 +428,13 @@ function hideTyping() {
   typingEl.style.display = 'none';
 }
 
-function appendMessage(role, text, sources) {
+function appendMessage(role, text, sources, citations = {}) {
   const msgEl = document.createElement('div');
   msgEl.className = `msg ${role}`;
 
   const bubbleEl = document.createElement('div');
   bubbleEl.className = 'bubble';
-  bubbleEl.innerHTML = renderMarkdown(text);
+  bubbleEl.innerHTML = renderMarkdown(text, citations);
   msgEl.appendChild(bubbleEl);
 
   if (sources && sources.length > 0) {
@@ -449,10 +468,10 @@ function appendError(msg) {
 }
 
 // ── Minimal markdown renderer ──────────────────────────────────────────────
-function renderMarkdown(text) {
+function renderMarkdown(text, citations = {}) {
   return text
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-    // Code blocks
+    // Code blocks (must run before inline code)
     .replace(/```[\w]*\n?([\s\S]*?)```/g, '<pre><code>$1</code></pre>')
     // Inline code
     .replace(/`([^`]+)`/g, '<code>$1</code>')
@@ -468,6 +487,13 @@ function renderMarkdown(text) {
     .replace(/^\d+\.\s+(.+)$/gm, '• $1')
     // Bullets
     .replace(/^[-*]\s+(.+)$/gm, '• $1')
+    // Inline citations [N] → clickable superscript using citations map keyed by string
+    .replace(/\[(\d+)\]/g, (_, n) => {
+      const s = citations[n];
+      if (!s) return `[${n}]`;
+      const tip = escHtml(`${s.title} › ${s.section}`);
+      return `<a href="${escHtml(s.url)}" target="_blank" rel="noopener noreferrer" class="cite-link" title="${tip}">[${n}]</a>`;
+    })
     // Line breaks
     .replace(/\n/g, '<br>');
 }
