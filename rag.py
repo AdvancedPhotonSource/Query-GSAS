@@ -151,9 +151,23 @@ def answer_question(question: str, history: list[dict]) -> dict:
             "sources": [],
         }
 
+    backend = os.environ.get("LLM_BACKEND", "ollama").lower()
+
+    if backend == "retrieval":
+        # No LLM — return top retrieved chunks as-is.
+        # Useful for offline use, testing, or when no LLM is configured.
+        parts = []
+        for s in sources:
+            label = f"[{s['title']}  ›  {s['section']}]"
+            parts.append(label)
+        answer = (
+            "Most relevant sections (no LLM synthesis — install Ollama or set "
+            "LLM_BACKEND=anthropic for generated answers):\n\n" + context
+        )
+        return {"answer": answer, "sources": sources}
+
     messages = _build_messages(question, context, history)
 
-    backend = os.environ.get("LLM_BACKEND", "ollama").lower()
     if backend == "ollama":
         answer = _answer_ollama(messages)
     else:

@@ -185,7 +185,7 @@ def main():
     parser.add_argument("--setup", action="store_true", help="Index documentation (first-time setup)")
     parser.add_argument("--reset", action="store_true", help="Drop and rebuild the index")
     parser.add_argument("--html-only", action="store_true", help="Skip PDFs during setup")
-    parser.add_argument("--backend", choices=["ollama", "anthropic"],
+    parser.add_argument("--backend", choices=["ollama", "anthropic", "retrieval"],
                         help="Override LLM_BACKEND env var")
     parser.add_argument("--model", help="Override OLLAMA_MODEL or ANTHROPIC_MODEL")
     parser.add_argument("--stats", action="store_true", help="Show index statistics and exit")
