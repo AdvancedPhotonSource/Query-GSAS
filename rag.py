@@ -33,7 +33,8 @@ Guidelines:
 - Each context section is numbered [1], [2], etc. Cite sources inline as you write \
   by inserting the number in brackets (e.g. "Open the Phase tab [1] and select..."). \
   Place the citation immediately after the sentence or clause it supports. Do NOT add \
-  a separate references section at the end.
+  a separate references section at the end. Do NOT reproduce the raw "[Source: ...]" \
+  labels from the context — use only the numeric [N] markers.
 - If the provided context does not contain enough information to answer, say so clearly \
   and suggest which tutorial might cover the topic.
 - Do not fabricate parameter names, menu paths, or file formats.
