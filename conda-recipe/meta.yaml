@@ -1,0 +1,53 @@
+{% set version = "0.2.0" %}
+
+package:
+  name: gsas-query
+  version: {{ version }}
+
+source:
+  url: https://github.com/pawantr/Query-GSAS/archive/refs/tags/v{{ version }}.tar.gz
+  # sha256: <fill in after tagging a release>
+
+build:
+  number: 0
+  script: {{ PYTHON }} -m pip install . -vv --no-deps --no-build-isolation
+  entry_points:
+    - gsas-query     = gsas_query.cli:main
+    - gsas-query-web = gsas_query._web:main
+
+requirements:
+  host:
+    - python >=3.10
+    - pip
+    - hatchling
+  run:
+    - python >=3.10
+    - chromadb >=0.5.0
+    - sentence-transformers >=3.0.0
+    - beautifulsoup4 >=4.12.0
+    - requests >=2.31.0
+    - pypdf >=4.0.0
+    - lxml >=5.0.0
+    - httpx >=0.27.0
+    - fastapi >=0.110.0
+    - uvicorn >=0.29.0
+    - python-dotenv >=1.0.0
+    - pydantic >=2.0.0
+
+test:
+  imports:
+    - gsas_query
+    - gsas_query.rag
+    - gsas_query.cli
+  commands:
+    - gsas-query --help
+
+about:
+  home: https://github.com/pawantr/Query-GSAS
+  license: MIT
+  summary: GSAS-II Documentation Assistant — local semantic search and AI answers
+  description: |
+    Semantic search + AI answers over the full GSAS-II documentation set
+    (129 HTML pages, Programmer's Guide PDF, Powder Crystallography book).
+    All embedding and retrieval runs locally. Integrates with the GSAS-II
+    Help menu via wxPython and ships a web UI for browser-based access.
