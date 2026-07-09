@@ -1,0 +1,74 @@
+name: Build ChromaDB index
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "gsas_query/sources.py"
+      - "gsas_query/ingest.py"
+      - ".github/workflows/ingest.yml"
+  workflow_dispatch:
+    inputs:
+      html_only:
+        description: "Skip PDF ingestion (faster)"
+        type: boolean
+        default: true
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-ingest-${{ hashFiles('pyproject.toml') }}
+
+      # CPU-only torch is ~400 MB; the default CUDA wheel is ~2.5 GB and
+      # causes OOM on GitHub-hosted runners.
+      - name: Install CPU-only PyTorch
+        run: pip install torch --index-url https://download.pytorch.org/whl/cpu
+
+      - name: Install package dependencies
+        run: pip install chromadb sentence-transformers beautifulsoup4 requests pypdf lxml
+
+      - name: Install gsas_query package
+        run: pip install -e .
+
+      - name: Build ChromaDB index
+        env:
+          TOKENIZERS_PARALLELISM: "false"
+          OMP_NUM_THREADS: "1"
+          GSAS_QUERY_DATA_DIR: ${{ github.workspace }}/ci_data
+        run: |
+          if [ "${{ github.event.inputs.html_only }}" = "false" ]; then
+            python ingest.py
+          else
+            python ingest.py --html-only
+          fi
+
+      - name: Show index stats
+        env:
+          GSAS_QUERY_DATA_DIR: ${{ github.workspace }}/ci_data
+        run: python -c "
+          import chromadb, os
+          path = os.path.join(os.environ['GSAS_QUERY_DATA_DIR'], 'chroma_db')
+          c = chromadb.PersistentClient(path=path)
+          col = c.get_collection('gsasii_docs')
+          print(f'Chunks in index: {col.count()}')
+          "
+
+      - name: Upload chroma_db artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: chroma_db
+          path: ci_data/chroma_db/
+          retention-days: 90
