@@ -8,6 +8,13 @@ Usage:
     python ingest.py --reset        # drop collection and re-ingest
 """
 
+# Must be set before sentence-transformers / tokenizers are imported.
+# Prevents loky from spawning parallel worker processes (causes zsh: killed
+# on Python 3.13 + macOS due to semaphore leak with the spawn start method).
+import os
+os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
+os.environ.setdefault("OMP_NUM_THREADS", "1")
+
 import argparse
 import hashlib
 import io

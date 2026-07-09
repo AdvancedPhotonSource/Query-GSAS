@@ -3,8 +3,10 @@
 import os
 from pathlib import Path
 
-# Suppress HuggingFace tokenizer fork warning — must happen before any import
+# Suppress HuggingFace tokenizer fork warning and OpenMP threading —
+# both must be set before sentence-transformers / loky are imported.
 os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
+os.environ.setdefault("OMP_NUM_THREADS", "1")
 
 
 def get_data_dir() -> Path:
