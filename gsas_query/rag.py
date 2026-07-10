@@ -11,12 +11,11 @@ import os
 from functools import lru_cache
 
 import chromadb
-from sentence_transformers import SentenceTransformer
+from chromadb.utils.embedding_functions import DefaultEmbeddingFunction
 
 from ._paths import get_chroma_path
 
 COLLECTION_NAME = "gsasii_docs"
-EMBED_MODEL = "all-MiniLM-L6-v2"
 TOP_K = 6
 
 SYSTEM_PROMPT = """\
@@ -42,8 +41,8 @@ Guidelines:
 
 
 @lru_cache(maxsize=1)
-def _get_model() -> SentenceTransformer:
-    return SentenceTransformer(EMBED_MODEL)
+def _get_ef() -> DefaultEmbeddingFunction:
+    return DefaultEmbeddingFunction()
 
 
 @lru_cache(maxsize=1)
@@ -53,13 +52,12 @@ def _get_collection() -> chromadb.Collection:
 
 
 def _retrieve(question: str) -> tuple[str, list[dict], dict[str, dict]]:
-    model = _get_model()
     collection = _get_collection()
 
     if collection.count() == 0:
         return "", [], {}
 
-    embedding = model.encode(question).tolist()
+    embedding = _get_ef()([question])[0]
     results = collection.query(
         query_embeddings=[embedding],
         n_results=TOP_K,

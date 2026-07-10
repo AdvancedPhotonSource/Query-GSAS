@@ -14,7 +14,6 @@ import time
 from ._paths import get_chroma_path
 
 COLLECTION_NAME = "gsasii_docs"
-EMBED_MODEL = "all-MiniLM-L6-v2"
 MAX_CHUNK_CHARS = 1200
 OVERLAP_CHARS = 150
 REQUEST_DELAY = 0.5
@@ -115,7 +114,7 @@ def ingest_html_source(source: dict, collection, model):
         chunks = chunk_text(section["text"])
         for i, chunk in enumerate(chunks):
             doc_id = hashlib.md5(f"{url}|{section['heading']}|{i}|{chunk[:64]}".encode()).hexdigest()
-            embedding = model.encode(chunk).tolist()
+            embedding = model([chunk])[0]
             ids.append(doc_id)
             docs.append(chunk)
             embeddings.append(embedding)
@@ -174,7 +173,7 @@ def ingest_pdf_source(source: dict, collection, model):
         section_label = f"Pages {page_start + 1}-{page_end}"
         for i, chunk in enumerate(chunk_text(combined_text)):
             doc_id = hashlib.md5(f"{url}|{section_label}|{i}".encode()).hexdigest()
-            embedding = model.encode(chunk).tolist()
+            embedding = model([chunk])[0]
             ids.append(doc_id)
             docs.append(chunk)
             embeddings.append(embedding)
@@ -199,11 +198,11 @@ def main():
     parser.add_argument("--reset", action="store_true", help="Drop and rebuild collection")
     args = parser.parse_args()
 
-    from sentence_transformers import SentenceTransformer
+    from chromadb.utils.embedding_functions import DefaultEmbeddingFunction
     from .sources import TUTORIAL_SOURCES, PDF_SOURCES, WEBPAGE_SOURCES
 
-    print("Loading embedding model...")
-    model = SentenceTransformer(EMBED_MODEL)
+    print("Loading embedding model (ONNX all-MiniLM-L6-v2)...")
+    model = DefaultEmbeddingFunction()
 
     print(f"ChromaDB path: {get_chroma_path()}")
     collection = get_collection(reset=args.reset)
