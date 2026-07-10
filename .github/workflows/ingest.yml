@@ -1,12 +1,6 @@
 name: Build ChromaDB index
 
 on:
-  push:
-    branches: ["main"]
-    paths:
-      - "gsas_query/sources.py"
-      - "gsas_query/ingest.py"
-      - ".github/workflows/ingest.yml"
   workflow_dispatch:
     inputs:
       include_pdfs:
