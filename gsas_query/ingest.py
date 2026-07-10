@@ -55,6 +55,8 @@ def chunk_text(text: str, max_chars: int = MAX_CHUNK_CHARS, overlap: int = OVERL
         chunk = text[start:end].strip()
         if chunk:
             chunks.append(chunk)
+        if end >= len(text):
+            break
         start = end - overlap
     return chunks
 
@@ -108,25 +110,27 @@ def ingest_html_source(source: dict, collection, model):
         return 0
 
     sections = extract_html_sections(resp.text, title)
-    ids, docs, embeddings, metadatas = [], [], [], []
+    # Use a dict keyed by doc_id to deduplicate identical chunks within the source.
+    records: dict[str, tuple] = {}
 
     for section in sections:
         chunks = chunk_text(section["text"])
-        for i, chunk in enumerate(chunks):
-            doc_id = hashlib.md5(f"{url}|{section['heading']}|{i}|{chunk[:64]}".encode()).hexdigest()
-            embedding = model([chunk])[0]
-            ids.append(doc_id)
-            docs.append(chunk)
-            embeddings.append(embedding)
-            metadatas.append({
-                "url": url,
-                "title": title,
-                "section": section["heading"],
-                "category": category,
-                "source_type": "html",
-            })
+        for chunk in chunks:
+            doc_id = hashlib.md5(f"{url}|{section['heading']}|{chunk}".encode()).hexdigest()
+            if doc_id not in records:
+                records[doc_id] = (chunk, model([chunk])[0], {
+                    "url": url,
+                    "title": title,
+                    "section": section["heading"],
+                    "category": category,
+                    "source_type": "html",
+                })
 
-    if ids:
+    if records:
+        ids = list(records)
+        docs = [v[0] for v in records.values()]
+        embeddings = [v[1] for v in records.values()]
+        metadatas = [v[2] for v in records.values()]
         collection.upsert(ids=ids, documents=docs, embeddings=embeddings, metadatas=metadatas)
         print(f"    -> {len(ids)} chunks stored")
 
