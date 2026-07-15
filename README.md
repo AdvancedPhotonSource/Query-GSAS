@@ -66,13 +66,17 @@ Other model options: `llama3:70b` (better quality, ~40 GB), `mistral` (faster, ~
 Run once, or again when the docs are updated. Fetches ~130 web pages and 2 PDFs,
 embeds everything locally. Takes ~10–20 minutes.
 
-The index is stored in `~/.gsas_query/chroma_db` (override with `GSAS_QUERY_DATA_DIR`).
+By default the index is stored in `~/.GSASII/gsas_query/chroma_db`
+(see [User data directory](#userdatadirectory) for details).
 
 ```bash
 gsas-query --setup              # all sources (HTML + PDFs)
 gsas-query --setup --html-only  # skip PDFs, faster (~5 min)
 gsas-query --setup --reset      # drop index and rebuild from scratch
 ```
+
+HTML-only index is 21 Mb. With GSAS-II Programmer's Guide, 41 Mb; with
+textbook as well, 53 Mb.
 
 ---
 
@@ -242,7 +246,7 @@ curl -X POST http://localhost:8000/ingest -H "X-Admin-Key: your-key"
 
 ## User data directory
 
-The ChromaDB index is stored at `~/.gsas_query/chroma_db` by default.
+The ChromaDB index is stored at `~/.GSASII/gsas_query/chroma_db` by default.
 Override with the `GSAS_QUERY_DATA_DIR` environment variable:
 
 ```bash

@@ -306,7 +306,7 @@ TUTORIAL_SOURCES = [
 
     # Misc
     {"title": "Cluster and Outlier Analysis",
-     "url": f"{BASE_URL}/ClusterAnalysis/ClusterAnalysis.html",
+     "url": f"{BASE_URL}/ClusterAnalysis/Cluster and Outlier Analysis.htm",
      "category": "Analysis"},
     {"title": "Changing the GSAS-II Font Size",
      "url": f"{BASE_URL}/FontSize/FontSize.html",
@@ -351,7 +351,13 @@ def get_book_url() -> str:
         )
     except Exception:
         return BOOK_FALLBACK_URL
-
+PDF_SOURCES += [
+    {
+        "title": "Crystallographic Powder Diffraction Analysis with GSAS-II: An Introduction to Rietveld Analysis",
+        "url": get_book_url(),
+        "category": "GSAS-II Rietveld textbook",
+    },
+]
 
 # ── Convenience aggregates ─────────────────────────────────────────────────────
 
