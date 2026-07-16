@@ -359,6 +359,61 @@ PDF_SOURCES += [
     },
 ]
 
+# ── Dynamic tutorial list from GSAS-II's tutorialIndex.py ────────────────────
+# Fetched at ingest time so new tutorials are picked up automatically.
+# Falls back to the hardcoded TUTORIAL_SOURCES on any network or parse error.
+
+_TUTORIAL_INDEX_URL = (
+    "https://raw.githubusercontent.com/AdvancedPhotonSource/GSAS-II"
+    "/main/GSASII/tutorialIndex.py"
+)
+
+
+def get_tutorial_sources() -> list[dict]:
+    """Return tutorial sources from GSAS-II's canonical tutorialIndex.py.
+
+    Uses ast.literal_eval (not eval) so untrusted file content is never executed.
+    Falls back to the hardcoded TUTORIAL_SOURCES list on any error.
+    """
+    import ast
+    import urllib.request
+
+    try:
+        req = urllib.request.Request(
+            _TUTORIAL_INDEX_URL, headers={"User-Agent": "gsas-query"}
+        )
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            content = resp.read().decode()
+
+        tree = ast.parse(content)
+        index_value = None
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Assign):
+                for target in node.targets:
+                    if isinstance(target, ast.Name) and target.id == "tutorialIndex":
+                        index_value = ast.literal_eval(node.value)
+                        break
+                if index_value is not None:
+                    break
+
+        if not index_value:
+            return TUTORIAL_SOURCES
+
+        sources = []
+        for entry in index_value:
+            if len(entry) == 4:
+                directory, filename, title, _ = entry
+                sources.append({
+                    "title": title.strip(),
+                    "url": f"{BASE_URL}/{directory}/{filename}",
+                    "category": "Tutorial",
+                })
+        return sources if sources else TUTORIAL_SOURCES
+
+    except Exception:
+        return TUTORIAL_SOURCES
+
+
 # ── Convenience aggregates ─────────────────────────────────────────────────────
 
 ALL_HTML_SOURCES = HOME_SOURCES + HELP_SOURCES + TUTORIAL_SOURCES

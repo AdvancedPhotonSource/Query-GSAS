@@ -203,7 +203,7 @@ def main():
     args = parser.parse_args()
 
     from chromadb.utils.embedding_functions import DefaultEmbeddingFunction
-    from .sources import TUTORIAL_SOURCES, PDF_SOURCES, WEBPAGE_SOURCES
+    from .sources import PDF_SOURCES, WEBPAGE_SOURCES, get_tutorial_sources
 
     print("Loading embedding model (ONNX all-MiniLM-L6-v2)...")
     model = DefaultEmbeddingFunction()
@@ -211,10 +211,14 @@ def main():
     print(f"ChromaDB path: {get_chroma_path()}")
     collection = get_collection(reset=args.reset)
 
+    print("Fetching tutorial list from GSAS-II repository…")
+    tutorial_sources = get_tutorial_sources()
+    print(f"  {len(tutorial_sources)} tutorials found")
+
     total_chunks = 0
 
     print("\n=== Ingesting HTML pages ===")
-    for source in WEBPAGE_SOURCES + TUTORIAL_SOURCES:
+    for source in WEBPAGE_SOURCES + tutorial_sources:
         total_chunks += ingest_html_source(source, collection, model)
 
     if not args.html_only:
