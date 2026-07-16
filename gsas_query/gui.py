@@ -11,6 +11,7 @@ GSAS-II Help menu integration:
         show_assistant(self)
 """
 
+import atexit
 import os
 import subprocess
 import sys
@@ -48,6 +49,9 @@ def _launch_ollama() -> "subprocess.Popen | None":
     for _ in range(12):          # wait up to 6 s
         time.sleep(0.5)
         if _is_ollama_running():
+            # Register a fallback: if GSAS-II exits without closing the dialog
+            # (EVT_CLOSE won't fire for child frames), atexit still kills Ollama.
+            atexit.register(proc.terminate)
             return proc
     proc.terminate()
     return None
@@ -234,7 +238,7 @@ class GSASQueryDialog(wx.Frame):
             return
 
         def _start():
-            self._status.SetStatusText("Checking Ollama…")
+            wx.CallAfter(self._status.SetStatusText, "Checking Ollama…")
             proc = _launch_ollama()
             if proc is not None:
                 self._ollama_proc = proc
@@ -248,6 +252,7 @@ class GSASQueryDialog(wx.Frame):
         global _instance
         _instance = None
         if self._ollama_proc is not None:
+            atexit.unregister(self._ollama_proc.terminate)  # cancel the fallback
             self._ollama_proc.terminate()
             self._ollama_proc = None
         self.Destroy()
