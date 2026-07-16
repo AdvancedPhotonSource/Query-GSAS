@@ -12,11 +12,45 @@ GSAS-II Help menu integration:
 """
 
 import os
+import subprocess
 import sys
 import threading
+import time
 import webbrowser
 
 from ._paths import get_chroma_path
+
+
+def _ollama_url() -> str:
+    return os.environ.get("OLLAMA_URL", "http://localhost:11434")
+
+
+def _is_ollama_running() -> bool:
+    try:
+        import httpx
+        return httpx.get(f"{_ollama_url()}/api/tags", timeout=2).status_code == 200
+    except Exception:
+        return False
+
+
+def _launch_ollama() -> "subprocess.Popen | None":
+    """Start `ollama serve` if not already running. Returns the process we started, or None."""
+    if _is_ollama_running():
+        return None
+    try:
+        proc = subprocess.Popen(
+            ["ollama", "serve"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+    except FileNotFoundError:
+        return None
+    for _ in range(12):          # wait up to 6 s
+        time.sleep(0.5)
+        if _is_ollama_running():
+            return proc
+    proc.terminate()
+    return None
 
 try:
     import wx
@@ -100,9 +134,12 @@ class GSASQueryDialog(wx.Frame):
         )
         self._history: list[dict] = []
         self._busy = False
+        self._ollama_proc: "subprocess.Popen | None" = None
         self._build_ui()
         self.Centre()
+        self.Bind(wx.EVT_CLOSE, self._on_close)
         self._check_index()
+        self._ensure_ollama()
 
     # ── UI construction ────────────────────────────────────────────────────────
 
@@ -191,6 +228,29 @@ class GSASQueryDialog(wx.Frame):
                 count = 0
             wx.CallAfter(self._set_index_status, count)
         threading.Thread(target=_check, daemon=True).start()
+
+    def _ensure_ollama(self):
+        if os.environ.get("LLM_BACKEND", "ollama") != "ollama":
+            return
+
+        def _start():
+            self._status.SetStatusText("Checking Ollama…")
+            proc = _launch_ollama()
+            if proc is not None:
+                self._ollama_proc = proc
+                wx.CallAfter(self._status.SetStatusText, "Ollama started")
+            else:
+                wx.CallAfter(self._status.SetStatusText, "")
+
+        threading.Thread(target=_start, daemon=True).start()
+
+    def _on_close(self, event):
+        global _instance
+        _instance = None
+        if self._ollama_proc is not None:
+            self._ollama_proc.terminate()
+            self._ollama_proc = None
+        self.Destroy()
 
     def _set_index_status(self, count: int):
         if count == 0:
