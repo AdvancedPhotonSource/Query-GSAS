@@ -125,18 +125,64 @@ def _answer_anthropic(messages: list[dict]) -> str:
     return response.content[0].text
 
 
+
+def _ollama_url() -> str:
+    return os.environ.get("OLLAMA_URL", "http://localhost:11434")
+
+
+def _installed_ollama_models() -> list[str]:
+    import httpx
+    resp = httpx.get(f"{_ollama_url()}/api/tags", timeout=5)
+    resp.raise_for_status()
+    data = resp.json() or {}
+    return [m.get("name", "") for m in data.get("models", []) if m.get("name")]
+
+
+def _choose_ollama_model() -> str:
+    preferred = os.environ.get("OLLAMA_MODEL", "").strip()
+    models = _installed_ollama_models()
+
+    if not models:
+        raise RuntimeError(
+            "No Ollama models are installed. Run e.g. "
+            "`ollama pull llama3.1:8b` or `ollama pull qwen2.5:3b`."
+        )
+
+    if preferred:
+        if preferred in models:
+            return preferred
+        raise RuntimeError(
+            f"OLLAMA_MODEL='{preferred}' is not installed. "
+            f"Available models: {', '.join(models)}"
+        )
+
+    for candidate in ("llama3.1:8b", "llama3", "qwen2.5:3b"):
+        if candidate in models:
+            return candidate
+
+    return models[0]
+
+
 def _answer_ollama(messages: list[dict]) -> str:
     import httpx
-    ollama_url = os.environ.get("OLLAMA_URL", "http://localhost:11434")
-    ollama_model = os.environ.get("OLLAMA_MODEL", "llama3")
+    ollama_url = _ollama_url()
+    ollama_model = _choose_ollama_model()
 
     full_messages = [{"role": "system", "content": SYSTEM_PROMPT}] + messages
-    resp = httpx.post(
-        f"{ollama_url}/api/chat",
-        json={"model": ollama_model, "messages": full_messages, "stream": False},
-        timeout=120,
-    )
-    resp.raise_for_status()
+    try:
+        resp = httpx.post(
+            f"{ollama_url}/api/chat",
+            json={"model": ollama_model, "messages": full_messages, "stream": False},
+            timeout=120,
+        )
+        resp.raise_for_status()
+    except httpx.HTTPStatusError as e:
+        detail = ""
+        try:
+            detail = f" | Response: {e.response.text}"
+        except Exception:
+            pass
+        raise RuntimeError(f"Ollama API error: {e}{detail}") from e
     return resp.json()["message"]["content"]
 
 
