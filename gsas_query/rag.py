@@ -1,10 +1,17 @@
 """
 RAG engine: query ChromaDB, retrieve relevant chunks, generate answer.
 
-LLM_BACKEND env var controls which LLM is used:
-  "ollama"     (default) — local Ollama server, fully on-premises
-  "anthropic"            — Anthropic Claude API (requires ANTHROPIC_API_KEY)
-  "retrieval"            — no LLM; returns raw matched chunks (offline / testing)
+Backend selection (in priority order):
+  1. If ``LLM_BACKEND`` env var is set explicitly, it is always honoured.
+  2. If ``LLM_BACKEND`` is not set and ``llama_cpp`` (llama-cpp-python) is
+     importable, the llama_cpp backend is selected automatically.
+  3. Otherwise the default is ``ollama``.
+
+Supported LLM_BACKEND values:
+  "ollama"     — local Ollama server, fully on-premises
+  "anthropic"  — Anthropic Claude API (requires ANTHROPIC_API_KEY)
+  "llama_cpp"  — in-process llama-cpp-python (requires LLAMA_CPP_MODEL path)
+  "retrieval"  — no LLM; returns raw matched chunks (offline / testing)
 """
 
 import os
@@ -113,6 +120,25 @@ def _build_messages(question: str, context: str, history: list[dict]) -> list[di
     return messages
 
 
+def _effective_backend() -> str:
+    """Return the backend to use.
+
+    Priority:
+      1. ``LLM_BACKEND`` env var when explicitly set.
+      2. ``llama_cpp`` when llama-cpp-python is importable and LLM_BACKEND unset.
+      3. ``ollama`` as the final default.
+    """
+    env_backend = os.environ.get("LLM_BACKEND", "").strip().lower()
+    if env_backend:
+        return env_backend
+    try:
+        import llama_cpp  # noqa: F401
+        return "llama_cpp"
+    except ImportError:
+        pass
+    return "ollama"
+
+
 def _answer_anthropic(messages: list[dict]) -> str:
     import anthropic
     client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
@@ -124,6 +150,22 @@ def _answer_anthropic(messages: list[dict]) -> str:
     )
     return response.content[0].text
 
+
+def _answer_llama_cpp(messages: list[dict]) -> str:
+    from llama_cpp import Llama
+    model_path = os.environ.get("LLAMA_CPP_MODEL", "").strip()
+    if not model_path:
+        raise RuntimeError(
+            "LLAMA_CPP_MODEL is not set. "
+            "Set it to the path of a GGUF model file, e.g. "
+            "LLAMA_CPP_MODEL=/path/to/model.gguf"
+        )
+    n_ctx = int(os.environ.get("LLAMA_CPP_N_CTX", "4096"))
+    max_tokens = int(os.environ.get("LLAMA_CPP_MAX_TOKENS", "1500"))
+    llm = Llama(model_path=model_path, n_ctx=n_ctx, verbose=False)
+    full_messages = [{"role": "system", "content": SYSTEM_PROMPT}] + messages
+    response = llm.create_chat_completion(messages=full_messages, max_tokens=max_tokens)
+    return response["choices"][0]["message"]["content"]
 
 
 def _ollama_url() -> str:
@@ -187,9 +229,9 @@ def _answer_ollama(messages: list[dict]) -> str:
 
 
 def answer_question(question: str, history: list[dict]) -> dict:
-    """Main entry point: returns {answer, sources, citations}."""
+    """Main entry point: returns {answer, sources, citations, backend}."""
     if not question.strip():
-        return {"answer": "Please enter a question.", "sources": [], "citations": {}}
+        return {"answer": "Please enter a question.", "sources": [], "citations": {}, "backend": ""}
 
     context, sources, citations = _retrieve(question)
 
@@ -201,22 +243,25 @@ def answer_question(question: str, history: list[dict]) -> dict:
             ),
             "sources": [],
             "citations": {},
+            "backend": "",
         }
 
-    backend = os.environ.get("LLM_BACKEND", "ollama").lower()
+    backend = _effective_backend()
 
     if backend == "retrieval":
         answer = (
-            "Most relevant sections (no LLM synthesis — install Ollama or set "
-            "LLM_BACKEND=anthropic for generated answers):\n\n" + context
+            "Most relevant sections (no LLM synthesis — install llama-cpp-python, "
+            "Ollama, or set LLM_BACKEND=anthropic for generated answers):\n\n" + context
         )
-        return {"answer": answer, "sources": sources, "citations": citations}
+        return {"answer": answer, "sources": sources, "citations": citations, "backend": backend}
 
     messages = _build_messages(question, context, history)
 
-    if backend == "ollama":
+    if backend == "llama_cpp":
+        answer = _answer_llama_cpp(messages)
+    elif backend == "ollama":
         answer = _answer_ollama(messages)
     else:
         answer = _answer_anthropic(messages)
 
-    return {"answer": answer, "sources": sources, "citations": citations}
+    return {"answer": answer, "sources": sources, "citations": citations, "backend": backend}
