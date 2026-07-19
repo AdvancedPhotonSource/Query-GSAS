@@ -95,6 +95,7 @@ def ask(question: str, history: list | None = None) -> dict:
 
 
 def interactive():
+    from .rag import _effective_backend
     count = _collection_count()
     if count == 0:
         print("\nWarning: the knowledge base is empty.")
@@ -102,7 +103,7 @@ def interactive():
     else:
         print(f"\nKnowledge base: {count:,} indexed chunks.")
 
-    backend = os.environ.get("LLM_BACKEND", "ollama")
+    backend = _effective_backend()
     print(f"LLM backend: {backend}")
     print("Type your question and press Enter. 'clear' resets history, 'quit' exits.\n")
     _hr()
@@ -153,7 +154,7 @@ def main():
     parser.add_argument("--setup", action="store_true", help="Index documentation (first-time setup)")
     parser.add_argument("--reset", action="store_true", help="Drop and rebuild the index")
     parser.add_argument("--html-only", action="store_true", help="Skip PDFs during setup")
-    parser.add_argument("--backend", choices=["ollama", "anthropic", "retrieval"],
+    parser.add_argument("--backend", choices=["ollama", "anthropic", "retrieval", "llama_cpp"],
                         help="Override LLM_BACKEND env var")
     parser.add_argument("--model", help="Override OLLAMA_MODEL or ANTHROPIC_MODEL")
     parser.add_argument("--stats", action="store_true", help="Show index statistics and exit")
@@ -163,16 +164,22 @@ def main():
     if args.backend:
         os.environ["LLM_BACKEND"] = args.backend
     if args.model:
-        key = "OLLAMA_MODEL" if os.environ.get("LLM_BACKEND", "ollama") == "ollama" else "ANTHROPIC_MODEL"
-        os.environ[key] = args.model
+        effective = os.environ.get("LLM_BACKEND", "")
+        if effective == "anthropic":
+            os.environ["ANTHROPIC_MODEL"] = args.model
+        elif effective == "llama_cpp":
+            os.environ["LLAMA_CPP_MODEL"] = args.model
+        else:
+            os.environ["OLLAMA_MODEL"] = args.model
 
     print("GSAS-II Documentation Assistant")
     _hr("═")
 
     if args.stats:
+        from .rag import _effective_backend
         count = _collection_count()
         print(f"Indexed chunks : {count:,}")
-        print(f"LLM backend    : {os.environ.get('LLM_BACKEND', 'ollama')}")
+        print(f"LLM backend    : {_effective_backend()}")
         print(f"Chroma DB      : {get_chroma_path()}")
         return
 

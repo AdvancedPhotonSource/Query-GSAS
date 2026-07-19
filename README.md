@@ -49,7 +49,7 @@ pip install -e ".[dev]"
 
 ---
 
-## Ollama — free local LLM (recommended)
+## Ollama — free local LLM (recommended when llama.cpp is not installed)
 
 ```bash
 brew install ollama          # macOS; see https://ollama.com for other platforms
@@ -58,6 +58,44 @@ ollama pull llama3           # ~5 GB one-time download
 ```
 
 Other model options: `llama3:70b` (better quality, ~40 GB), `mistral` (faster, ~4 GB).
+
+---
+
+## llama-cpp-python — in-process local LLM (auto-selected when installed)
+
+`llama-cpp-python` runs a GGUF model directly inside the Python process — no
+separate server required. It is cross-platform and available from conda-forge.
+
+When `llama-cpp-python` is importable, gsas-query selects it **automatically**
+without any `LLM_BACKEND` setting.
+
+### Install
+
+```bash
+conda install -c conda-forge llama-cpp-python   # recommended
+# or:
+pip install "gsas-query[llama_cpp]"
+```
+
+### Download a GGUF model
+
+Download any GGUF-format model from Hugging Face, for example:
+
+```bash
+# Llama 3.1 8B (Q4_K_M quantisation, ~5 GB):
+wget https://huggingface.co/bartowski/Meta-Llama-3.1-8B-Instruct-GGUF/resolve/main/Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf
+```
+
+### Configure
+
+Set the model path in your `.env` or environment:
+
+```env
+LLAMA_CPP_MODEL=/path/to/Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf
+# Optional tuning:
+# LLAMA_CPP_N_CTX=4096       # context window (default: 4096)
+# LLAMA_CPP_MAX_TOKENS=1500  # max tokens to generate (default: 1500)
+```
 
 ---
 
@@ -167,18 +205,23 @@ as clickable superscript links and source chips below each answer.
 | `--setup --reset` | Drop the existing index and rebuild |
 | `--setup --html-only` | Index HTML only, skip PDFs |
 | `--gui` | Open the wxPython desktop assistant |
-| `--backend ollama\|anthropic\|retrieval` | Override `LLM_BACKEND` env var |
-| `--model <name>` | Override Ollama or Anthropic model |
+| `--backend ollama\|anthropic\|retrieval\|llama_cpp` | Override `LLM_BACKEND` env var |
+| `--model <name>` | Override OLLAMA_MODEL, ANTHROPIC_MODEL, or LLAMA_CPP_MODEL |
 | `--stats` | Show chunk count, backend, and DB path |
 
 ---
 
 ## LLM backend configuration
 
-Set `LLM_BACKEND` in a `.env` file or the environment:
+Backend selection precedence:
+
+1. `LLM_BACKEND` env var (or `--backend` CLI flag) **always takes effect when set**.
+2. If `LLM_BACKEND` is **not set** and `llama-cpp-python` is importable, `llama_cpp` is selected automatically.
+3. Otherwise the default is `ollama`.
 
 | Backend | Config | Notes |
 |---|---|---|
+| `llama_cpp` (auto) | `LLAMA_CPP_MODEL=/path/to/model.gguf` | In-process, no daemon needed; auto-selected when llama-cpp-python is installed |
 | `ollama` (default) | `OLLAMA_MODEL=llama3` | Free, fully local — no data leaves the network |
 | `anthropic` | `ANTHROPIC_API_KEY=sk-ant-…` | Better answers; queries sent to Anthropic |
 | `retrieval` | — | No LLM — returns raw matched chunks; useful offline or for testing |
@@ -186,13 +229,14 @@ Set `LLM_BACKEND` in a `.env` file or the environment:
 ```bash
 gsas-query --backend retrieval "What is Le Bail extraction?"
 gsas-query --backend ollama --model mistral "How do I index peaks?"
+gsas-query --backend llama_cpp --model /path/to/model.gguf "How do I refine a structure?"
 ```
 
 ---
 
 ## Inline citations
 
-When using Ollama or Anthropic backends, answers contain `[N]` markers inline.
+When using Ollama, llama_cpp, or Anthropic backends, answers contain `[N]` markers inline.
 In the **web UI** these render as clickable superscript links opening the exact
 source section. In the **CLI**, source URLs are listed below the answer with
 relevance scores.
