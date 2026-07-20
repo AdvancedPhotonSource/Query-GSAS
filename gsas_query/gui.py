@@ -239,7 +239,8 @@ class GSASQueryDialog(wx.Frame):
         threading.Thread(target=_check, daemon=True).start()
 
     def _ensure_ollama(self):
-        if os.environ.get("LLM_BACKEND", "ollama") != "ollama":
+        from .rag import _effective_backend
+        if _effective_backend() != "ollama":
             return
 
         # If an Ollama server is already reachable (possibly started outside this env),

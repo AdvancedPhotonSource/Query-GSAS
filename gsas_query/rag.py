@@ -151,8 +151,13 @@ def _answer_anthropic(messages: list[dict]) -> str:
     return response.content[0].text
 
 
-def _answer_llama_cpp(messages: list[dict]) -> str:
+@lru_cache(maxsize=1)
+def _get_llama(model_path: str, n_ctx: int):
     from llama_cpp import Llama
+    return Llama(model_path=model_path, n_ctx=n_ctx, verbose=False)
+
+
+def _answer_llama_cpp(messages: list[dict]) -> str:
     model_path = os.environ.get("LLAMA_CPP_MODEL", "").strip()
     if not model_path:
         raise RuntimeError(
@@ -162,7 +167,7 @@ def _answer_llama_cpp(messages: list[dict]) -> str:
         )
     n_ctx = int(os.environ.get("LLAMA_CPP_N_CTX", "4096"))
     max_tokens = int(os.environ.get("LLAMA_CPP_MAX_TOKENS", "1500"))
-    llm = Llama(model_path=model_path, n_ctx=n_ctx, verbose=False)
+    llm = _get_llama(model_path, n_ctx)
     full_messages = [{"role": "system", "content": SYSTEM_PROMPT}] + messages
     response = llm.create_chat_completion(messages=full_messages, max_tokens=max_tokens)
     return response["choices"][0]["message"]["content"]
