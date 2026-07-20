@@ -88,6 +88,7 @@ def _retrieve(question: str) -> tuple[str, list[dict], dict[str, dict]]:
             "title": meta["title"],
             "section": meta["section"],
             "url": meta["url"],
+            "relevance": round(1 - dist, 3),
         }
         source_key = (meta["url"], meta["section"])
         if source_key not in seen_sources:

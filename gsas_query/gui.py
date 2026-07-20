@@ -100,7 +100,7 @@ class _QueryThread(threading.Thread):
 # ── Source link panel ──────────────────────────────────────────────────────────
 
 class _SourcePanel(wx.Panel):
-    def __init__(self, parent, source: dict):
+    def __init__(self, parent, source: dict, number: int):
         super().__init__(parent, style=wx.BORDER_NONE)
         self.SetBackgroundColour(parent.GetBackgroundColour())
 
@@ -109,11 +109,21 @@ class _SourcePanel(wx.Panel):
         section = source.get("section", "")
         rel = int(source.get("relevance", 0) * 100)
 
-        label = f"[{rel}%]  {title}"
-        if section and section != title:
-            label += f"  ›  {section}"
+        # Number label — bold, matches inline [N] in answer text
+        num_lbl = wx.StaticText(self, label=f"[{number}]")
+        num_lbl.SetForegroundColour(_ACCENT)
+        nf = num_lbl.GetFont()
+        nf.SetWeight(wx.FONTWEIGHT_BOLD)
+        nf.SetPointSize(nf.GetPointSize() - 1)
+        num_lbl.SetFont(nf)
 
-        lnk = wx.StaticText(self, label=label)
+        # Clickable title + section
+        text = title
+        if section and section != title:
+            text += f"  ›  {section}"
+        text += f"  [{rel}%]"
+
+        lnk = wx.StaticText(self, label=text)
         lnk.SetForegroundColour(_BLUE)
         lnk.SetCursor(wx.Cursor(wx.CURSOR_HAND))
         f = lnk.GetFont()
@@ -122,6 +132,7 @@ class _SourcePanel(wx.Panel):
         lnk.Bind(wx.EVT_LEFT_UP, lambda e: webbrowser.open(url))
 
         sizer = wx.BoxSizer(wx.HORIZONTAL)
+        sizer.Add(num_lbl, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 6)
         sizer.Add(lnk, 1, wx.ALIGN_CENTER_VERTICAL)
         self.SetSizer(sizer)
 
@@ -319,7 +330,7 @@ class GSASQueryDialog(wx.Frame):
         self._history.append({"role": "user",
                                "content": self._chat.GetValue().split("\n")[-2]})
         self._history.append({"role": "assistant", "content": answer})
-        self._show_sources(result.get("sources", []))
+        self._show_sources(result.get("citations", {}))
 
     # ── Chat helpers ───────────────────────────────────────────────────────────
 
@@ -344,15 +355,10 @@ class GSASQueryDialog(wx.Frame):
         self._src_inner.Clear(delete_windows=True)
         self._src_panel.Layout()
 
-    def _show_sources(self, sources: list[dict]):
+    def _show_sources(self, citations: dict):
         self._clear_sources()
-        seen: set = set()
-        for s in sources:
-            url = s.get("url", "")
-            if url in seen:
-                continue
-            seen.add(url)
-            item = _SourcePanel(self._src_panel, s)
+        for key in sorted(citations, key=lambda k: int(k)):
+            item = _SourcePanel(self._src_panel, citations[key], number=int(key))
             self._src_inner.Add(item, 0, wx.EXPAND | wx.BOTTOM, 4)
         self._src_panel.FitInside()
         self._src_panel.Layout()
