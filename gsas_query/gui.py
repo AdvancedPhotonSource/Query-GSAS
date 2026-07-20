@@ -26,6 +26,11 @@ def _ollama_url() -> str:
     return os.environ.get("OLLAMA_URL", "http://localhost:11434")
 
 
+def _ollama_bin() -> str:
+    """Return ollama executable path (optionally overridden by env)."""
+    return os.environ.get("OLLAMA_BIN", "ollama")
+
+
 def _is_ollama_running() -> bool:
     try:
         import httpx
@@ -40,7 +45,7 @@ def _launch_ollama() -> "subprocess.Popen | None":
         return None
     try:
         proc = subprocess.Popen(
-            ["ollama", "serve"],
+            [_ollama_bin(), "serve"],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
         )
@@ -237,6 +242,12 @@ class GSASQueryDialog(wx.Frame):
         if os.environ.get("LLM_BACKEND", "ollama") != "ollama":
             return
 
+        # If an Ollama server is already reachable (possibly started outside this env),
+        # do not launch another process from PATH.
+        if _is_ollama_running():
+            self._status.SetStatusText("Connected to Ollama")
+            return
+
         def _start():
             wx.CallAfter(self._status.SetStatusText, "Checking Ollama…")
             proc = _launch_ollama()
@@ -244,7 +255,11 @@ class GSASQueryDialog(wx.Frame):
                 self._ollama_proc = proc
                 wx.CallAfter(self._status.SetStatusText, "Ollama started")
             else:
-                wx.CallAfter(self._status.SetStatusText, "")
+                wx.CallAfter(
+                    self._status.SetStatusText,
+                    "Ollama not found. Start it manually: ollama serve",
+                )
+
 
         threading.Thread(target=_start, daemon=True).start()
 
