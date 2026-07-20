@@ -76,19 +76,28 @@ def _retrieve(question: str) -> tuple[str, list[dict], dict[str, dict]]:
     sources = []
     seen_sources: set = set()
 
+    # Normalise distances within the result set so the best match = 100%
+    # and others are proportional. Raw cosine distances from all-MiniLM tend
+    # to cluster near 1.0 even for good matches, making raw % look misleading.
+    distances = results["distances"][0]
+    min_d = min(distances) if distances else 0.0
+    max_d = max(distances) if distances else 1.0
+    span = (max_d - min_d) or 1.0
+
     for i, (doc, meta, dist) in enumerate(zip(
         results["documents"][0],
         results["metadatas"][0],
-        results["distances"][0],
+        distances,
     ), start=1):
         context_parts.append(
             f"[{i}] [Source: {meta['title']} | Section: {meta['section']}]\n{doc}"
         )
+        relevance = round((max_d - dist) / span, 3)   # 1.0 = best, 0.0 = weakest
         citations[str(i)] = {
             "title": meta["title"],
             "section": meta["section"],
             "url": meta["url"],
-            "relevance": round(1 - dist, 3),
+            "relevance": relevance,
         }
         source_key = (meta["url"], meta["section"])
         if source_key not in seen_sources:
@@ -98,7 +107,7 @@ def _retrieve(question: str) -> tuple[str, list[dict], dict[str, dict]]:
                 "section": meta["section"],
                 "url": meta["url"],
                 "category": meta.get("category", ""),
-                "relevance": round(1 - dist, 3),
+                "relevance": relevance,
             })
 
     context = "\n\n---\n\n".join(context_parts)
