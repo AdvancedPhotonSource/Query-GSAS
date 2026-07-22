@@ -21,3 +21,7 @@ build/
 
 # Downloaded PDFs (re-fetched during ingestion)
 *.pdf
+manuscript/
+
+# Internal admin paperwork (disclosure drafts etc.)
+release/

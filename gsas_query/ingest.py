@@ -133,9 +133,11 @@ def ingest_html_source(source: dict, collection, model):
         metadatas = [v[2] for v in records.values()]
         collection.upsert(ids=ids, documents=docs, embeddings=embeddings, metadatas=metadatas)
         print(f"    -> {len(ids)} chunks stored")
+        time.sleep(REQUEST_DELAY)
+        return len(ids)
 
     time.sleep(REQUEST_DELAY)
-    return len(ids)
+    return 0
 
 
 def ingest_pdf_source(source: dict, collection, model):

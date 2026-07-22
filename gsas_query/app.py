@@ -69,6 +69,7 @@ class Citation(BaseModel):
     title: str
     section: str
     url: str
+    relevance: float = 0.0
 
 
 class ChatResponse(BaseModel):
@@ -114,14 +115,13 @@ async def health():
 
 @app.get("/stats")
 async def stats():
-    from .rag import _get_collection
+    from .rag import _effective_backend, _get_collection
     try:
         col = _get_collection()
         count = col.count()
     except Exception:
         count = -1
-    backend = os.environ.get("LLM_BACKEND", "ollama")
-    return {"chunks_indexed": count, "llm_backend": backend}
+    return {"chunks_indexed": count, "llm_backend": _effective_backend()}
 
 
 @app.post("/chat", response_model=ChatResponse)

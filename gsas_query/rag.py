@@ -58,11 +58,11 @@ def _get_collection() -> chromadb.Collection:
     return client.get_or_create_collection(COLLECTION_NAME)
 
 
-def _retrieve(question: str) -> tuple[str, list[dict], dict[str, dict]]:
+def _retrieve(question: str) -> tuple[str, list[dict], dict[str, dict], list[str]]:
     collection = _get_collection()
 
     if collection.count() == 0:
-        return "", [], {}
+        return "", [], {}, []
 
     embedding = _get_ef()([question])[0]
     results = collection.query(
@@ -75,6 +75,7 @@ def _retrieve(question: str) -> tuple[str, list[dict], dict[str, dict]]:
     citations: dict[str, dict] = {}
     sources = []
     seen_sources: set = set()
+    chunk_texts: list[str] = []
 
     # Normalise distances within the result set so the best match = 100%
     # and others are proportional. Raw cosine distances from all-MiniLM tend
@@ -99,6 +100,7 @@ def _retrieve(question: str) -> tuple[str, list[dict], dict[str, dict]]:
             "url": meta["url"],
             "relevance": relevance,
         }
+        chunk_texts.append(doc)
         source_key = (meta["url"], meta["section"])
         if source_key not in seen_sources:
             seen_sources.add(source_key)
@@ -111,7 +113,7 @@ def _retrieve(question: str) -> tuple[str, list[dict], dict[str, dict]]:
             })
 
     context = "\n\n---\n\n".join(context_parts)
-    return context, sources, citations
+    return context, sources, citations, chunk_texts
 
 
 def _build_messages(question: str, context: str, history: list[dict]) -> list[dict]:
@@ -176,7 +178,8 @@ def _answer_llama_cpp(messages: list[dict]) -> str:
             "LLAMA_CPP_MODEL=/path/to/model.gguf"
         )
     n_ctx = int(os.environ.get("LLAMA_CPP_N_CTX", "4096"))
-    max_tokens = int(os.environ.get("LLAMA_CPP_MAX_TOKENS", "1500"))
+    # Cap at 800 tokens for small models to prevent repetition loops.
+    max_tokens = int(os.environ.get("LLAMA_CPP_MAX_TOKENS", "800"))
     llm = _get_llama(model_path, n_ctx)
     full_messages = [{"role": "system", "content": SYSTEM_PROMPT}] + messages
     response = llm.create_chat_completion(messages=full_messages, max_tokens=max_tokens)
@@ -248,7 +251,7 @@ def answer_question(question: str, history: list[dict]) -> dict:
     if not question.strip():
         return {"answer": "Please enter a question.", "sources": [], "citations": {}, "backend": ""}
 
-    context, sources, citations = _retrieve(question)
+    context, sources, citations, chunk_texts = _retrieve(question)
 
     if not context:
         return {
@@ -279,4 +282,96 @@ def answer_question(question: str, history: list[dict]) -> dict:
     else:
         answer = _answer_anthropic(messages)
 
+    answer = _inject_citations(answer, chunk_texts)
+    answer, citations = _renumber_by_appearance(answer, citations)
     return {"answer": answer, "sources": sources, "citations": citations, "backend": backend}
+
+
+def _renumber_by_appearance(answer: str, citations: dict) -> tuple[str, dict]:
+    """Renumber [N] markers so citations are sequential in order of first appearance.
+
+    The injector assigns numbers by relevance rank, so [4] may appear before [2]
+    in the text. This makes citations appear in order: first cited = [1], etc.
+    Sources not cited inline are appended at the end of the new citations dict
+    (for the bibliography) but get no inline marker.
+    """
+    import re
+
+    # Walk the text to get first-appearance order of each cited number
+    appeared: list[str] = []
+    seen: set[str] = set()
+    for m in re.finditer(r'\[(\d+)\]', answer):
+        k = m.group(1)
+        if k in citations and k not in seen:
+            appeared.append(k)
+            seen.add(k)
+
+    # Append any retrieved-but-uncited chunks (for full bibliography)
+    for k in sorted(citations, key=int):
+        if k not in seen:
+            appeared.append(k)
+
+    # old key → new sequential key
+    old_to_new = {old: str(i + 1) for i, old in enumerate(appeared)}
+
+    # Rewrite [N] markers in the answer text
+    new_answer = re.sub(
+        r'\[(\d+)\]',
+        lambda m: f'[{old_to_new.get(m.group(1), m.group(1))}]',
+        answer,
+    )
+
+    # Rebuild citations dict in new order
+    new_citations = {old_to_new[k]: citations[k] for k in appeared}
+    return new_answer, new_citations
+
+
+def _inject_citations(answer: str, chunk_texts: list[str]) -> str:
+    """Inject [N] citation markers inline using keyword overlap with context chunks.
+
+    Small models (3B) rarely cite more than one source. This post-processor
+    scans each substantive line, finds the best-matching context chunk by
+    content-word overlap, and appends [N] if not already present. Requires at
+    least 4 shared content words (≥4 chars) to avoid spurious matches.
+    """
+    import re
+
+    # Pre-compute content-word sets for each chunk (1-indexed)
+    _STOP = {"gsas", "gsasii", "that", "with", "this", "from", "will", "have",
+             "your", "then", "they", "each", "also", "been", "used", "when"}
+
+    def content_words(text: str) -> set[str]:
+        return {w for w in re.findall(r'\b[a-zA-Z]{4,}\b', text.lower())
+                if w not in _STOP}
+
+    chunk_word_sets = [content_words(t) for t in chunk_texts]
+
+    def best_chunk_for(line: str) -> int | None:
+        lwords = content_words(line)
+        if len(lwords) < 5:
+            return None
+        best_score = 3  # minimum overlap threshold
+        best_n = None
+        for n, cwords in enumerate(chunk_word_sets, start=1):
+            score = len(lwords & cwords)
+            if score > best_score:
+                best_score = score
+                best_n = n
+        return best_n
+
+    lines = answer.split('\n')
+    result = []
+    for line in lines:
+        stripped = line.strip()
+        # Skip: already cited, blank, bullet markers alone, or very short
+        if (not stripped
+                or re.search(r'\[\d+\]', stripped)
+                or len(stripped) < 40):
+            result.append(line)
+            continue
+        n = best_chunk_for(stripped)
+        if n is not None:
+            result.append(line.rstrip() + f' [{n}]')
+        else:
+            result.append(line)
+    return '\n'.join(result)

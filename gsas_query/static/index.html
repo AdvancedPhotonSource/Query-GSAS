@@ -125,36 +125,43 @@
   }
   .bubble pre code { background: none; padding: 0; }
 
-  /* ── Source chips ─────────────────────────────────────────── */
-  .sources {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-top: 8px;
+  /* ── Journal bibliography ────────────────────────────────── */
+  .references {
+    margin-top: 10px;
+    border-top: 1px solid var(--border);
+    padding-top: 8px;
     max-width: 100%;
   }
-  .src-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    background: var(--chip-bg);
-    color: var(--chip-text);
-    border: 1px solid #c7d7f8;
-    border-radius: 20px;
-    padding: 3px 10px;
-    font-size: .72rem;
-    font-weight: 500;
-    text-decoration: none;
-    transition: background .15s;
-    cursor: pointer;
+  .ref-heading {
+    color: var(--muted);
+    font-size: .68rem;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    margin-bottom: 5px;
   }
-  .src-chip:hover { background: #c7d7f8; }
-  .src-chip .rel {
-    background: var(--primary);
-    color: #fff;
-    border-radius: 10px;
-    padding: 1px 5px;
-    font-size: .65rem;
+  .ref-entry {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    padding: 2px 0;
+    text-decoration: none;
+    color: var(--primary);
+    font-size: .78rem;
+    line-height: 1.45;
+  }
+  .ref-entry:hover .ref-label { text-decoration: underline; }
+  .ref-num {
+    color: var(--accent);
+    font-weight: 700;
+    font-size: .78rem;
+    flex-shrink: 0;
+    min-width: 22px;
+  }
+  .ref-label { flex: 1; }
+  .ref-section {
+    color: var(--muted);
+    font-size: .74rem;
   }
 
   /* ── Inline citation superscripts ────────────────────────────── */
@@ -302,7 +309,7 @@
   <div class="logo">GS</div>
   <div>
     <h1>GSAS-II Assistant</h1>
-    <p>Powered by your local documentation</p>
+    <p>Powered by GSAS-II docs</p>
   </div>
   <div class="spacer"></div>
   <div id="stats-badge" title="Number of indexed documentation chunks">Loading…</div>
@@ -437,21 +444,41 @@ function appendMessage(role, text, sources, citations = {}) {
   bubbleEl.innerHTML = renderMarkdown(text, citations);
   msgEl.appendChild(bubbleEl);
 
-  if (sources && sources.length > 0) {
-    const srcEl = document.createElement('div');
-    srcEl.className = 'sources';
-    sources.forEach(s => {
-      const chip = document.createElement('a');
-      chip.className = 'src-chip';
-      chip.href = s.url;
-      chip.target = '_blank';
-      chip.rel = 'noopener noreferrer';
-      chip.title = s.section;
-      const pct = Math.round(s.relevance * 100);
-      chip.innerHTML = `📄 ${escHtml(s.title)} <span class="rel">${pct}%</span>`;
-      srcEl.appendChild(chip);
-    });
-    msgEl.appendChild(srcEl);
+  // Journal-style bibliography: only list numbers that appear inline in the text
+  if (role === 'bot' && Object.keys(citations).length > 0) {
+    const usedNums = new Set();
+    for (const m of text.matchAll(/\[(\d+)\]/g)) usedNums.add(m[1]);
+
+    const entries = Object.keys(citations)
+      .sort((a, b) => Number(a) - Number(b));
+
+    if (entries.length > 0) {
+      const refEl = document.createElement('div');
+      refEl.className = 'references';
+
+      const heading = document.createElement('div');
+      heading.className = 'ref-heading';
+      heading.textContent = 'References';
+      refEl.appendChild(heading);
+
+      entries.forEach(k => {
+        const s = citations[k];
+        const section = s.section && s.section !== s.title ? s.section : '';
+        const a = document.createElement('a');
+        a.className = 'ref-entry';
+        a.href = s.url;
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+        a.innerHTML =
+          `<span class="ref-num">[${k}]</span>` +
+          `<span class="ref-label">${escHtml(s.title)}` +
+          (section ? `<span class="ref-section"> — ${escHtml(section)}</span>` : '') +
+          `</span>`;
+        refEl.appendChild(a);
+      });
+
+      msgEl.appendChild(refEl);
+    }
   }
 
   // Insert before typing indicator

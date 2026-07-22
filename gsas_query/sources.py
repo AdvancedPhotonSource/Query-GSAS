@@ -313,15 +313,40 @@ TUTORIAL_SOURCES = [
      "category": "Miscellaneous"},
 ]
 
+# ── GSAS-II Programmer's Guide — readthedocs HTML (preferred over PDF) ────────
+
+_RTD = "https://gsas-ii.readthedocs.io/en/latest"
+
+READTHEDOCS_SOURCES = [
+    {"title": "GSAS-II Packages Overview",          "url": f"{_RTD}/packages.html",          "category": "Programmer's Guide"},
+    {"title": "GSAS-II Versioning",                 "url": f"{_RTD}/versioning.html",         "category": "Programmer's Guide"},
+    {"title": "Object/Variable Organization",       "url": f"{_RTD}/objvarorg.html",          "category": "Programmer's Guide"},
+    {"title": "GSASII module",                      "url": f"{_RTD}/GSASII.html",             "category": "Programmer's Guide"},
+    {"title": "GSASIIobj module",                   "url": f"{_RTD}/GSASIIobj.html",          "category": "Programmer's Guide"},
+    {"title": "GSASIIutil module",                  "url": f"{_RTD}/GSASIIutil.html",         "category": "Programmer's Guide"},
+    {"title": "GSASIIGUIr module",                  "url": f"{_RTD}/GSASIIGUIr.html",         "category": "Programmer's Guide"},
+    {"title": "GSASIIGUI module",                   "url": f"{_RTD}/GSASIIGUI.html",          "category": "Programmer's Guide"},
+    {"title": "GSASIIdata module",                  "url": f"{_RTD}/GSASIIdata.html",         "category": "Programmer's Guide"},
+    {"title": "GSASIIstruc module",                 "url": f"{_RTD}/GSASIIstruc.html",        "category": "Programmer's Guide"},
+    {"title": "GSASIImapvars module",               "url": f"{_RTD}/GSASIImapvars.html",      "category": "Programmer's Guide"},
+    {"title": "GSASIIimage module",                 "url": f"{_RTD}/GSASIIimage.html",        "category": "Programmer's Guide"},
+    {"title": "GSASIImath module",                  "url": f"{_RTD}/GSASIImath.html",         "category": "Programmer's Guide"},
+    {"title": "GSAS-II Index",                      "url": f"{_RTD}/GSASIIindex.html",        "category": "Programmer's Guide"},
+    {"title": "Graphics modules",                   "url": f"{_RTD}/graphics.html",           "category": "Programmer's Guide"},
+    {"title": "GSASIIpwd module",                   "url": f"{_RTD}/GSASIIpwd.html",          "category": "Programmer's Guide"},
+    {"title": "Small Angle Scattering module",      "url": f"{_RTD}/SAS.html",                "category": "Programmer's Guide"},
+    {"title": "GSASIIscriptable module",            "url": f"{_RTD}/GSASIIscriptable.html",   "category": "Programmer's Guide"},
+    {"title": "GSASIIscripts module",               "url": f"{_RTD}/GSASIIscripts.html",      "category": "Programmer's Guide"},
+    {"title": "GSASIIweb module",                   "url": f"{_RTD}/GSASIIweb.html",          "category": "Programmer's Guide"},
+    {"title": "Import modules",                     "url": f"{_RTD}/imports.html",            "category": "Programmer's Guide"},
+    {"title": "Export modules",                     "url": f"{_RTD}/exports.html",            "category": "Programmer's Guide"},
+    {"title": "G2tools module",                     "url": f"{_RTD}/G2tools.html",            "category": "Programmer's Guide"},
+    {"title": "GSAS-II General Index",              "url": f"{_RTD}/indices.html",            "category": "Programmer's Guide"},
+]
+
 # ── PDF sources ────────────────────────────────────────────────────────────────
 
-PDF_SOURCES = [
-    {
-        "title": "GSAS-II Programmer's Guide",
-        "url": "https://gsas-ii.readthedocs.io/_/downloads/en/latest/pdf/",
-        "category": "Programmer's Guide",
-    },
-]
+PDF_SOURCES = []  # Programmer's Guide now ingested as HTML (see READTHEDOCS_SOURCES)
 
 # ── Dynamic PDF: Powder Crystallography book (Brian Toby) ─────────────────────
 # Updated every week or two — fetched fresh at ingest time.
@@ -418,5 +443,5 @@ def get_tutorial_sources() -> list[dict]:
 
 ALL_HTML_SOURCES = HOME_SOURCES + HELP_SOURCES + TUTORIAL_SOURCES
 
-# Backward-compat name used by ingest.py
-WEBPAGE_SOURCES = HOME_SOURCES
+# All non-tutorial HTML sources ingested by ingest.py
+WEBPAGE_SOURCES = HOME_SOURCES + HELP_SOURCES + READTHEDOCS_SOURCES
