@@ -4,9 +4,9 @@ Complete list of GSAS-II documentation sources.
 All URLs resolve under:
     https://advancedphotonsource.github.io/GSAS-II-tutorials/
 
-Additional PDFs:
-  - GSAS-II Programmer's Guide (readthedocs)
-  - Powder Crystallography book (Brian Toby, updated weekly — fetched dynamically)
+Additional HTML sources:
+  - GSAS-II Programmer's Guide — 24 pages from readthedocs (READTHEDOCS_SOURCES)
+  - Powder Diffraction Crystallography book — 185 HTML pages (BOOK_HTML_SOURCES, optional)
 """
 
 BASE_URL = "https://advancedphotonsource.github.io/GSAS-II-tutorials"
@@ -346,43 +346,35 @@ READTHEDOCS_SOURCES = [
 
 # ── PDF sources ────────────────────────────────────────────────────────────────
 
-PDF_SOURCES = []  # Programmer's Guide now ingested as HTML (see READTHEDOCS_SOURCES)
+PDF_SOURCES = []  # Book and Programmer's Guide now available as HTML
 
-# ── Dynamic PDF: Powder Crystallography book (Brian Toby) ─────────────────────
-# Updated every week or two — fetched fresh at ingest time.
+# ── Powder Diffraction Crystallography book — 185 HTML pages (Brian Toby) ─────
+# https://briantoby.github.io/PowderCrystallography/
+# Pages are accessible by direct URL; include via `gsas-query --setup --book`.
 
-BOOK_REPO = "briantoby/PowderCrystallography"
-BOOK_FILENAME = "PowderCrystallography.pdf"
-BOOK_FALLBACK_URL = (
-    "https://github.com/briantoby/PowderCrystallography/releases/download"
-    "/v0.6.0/PowderCrystallography.pdf"
-)
+_BOOK_BASE = "https://briantoby.github.io/PowderCrystallography"
 
-
-def get_book_url() -> str:
-    """Return download URL for the latest release of the book."""
-    import json
-    import urllib.request
-    try:
-        api_url = f"https://api.github.com/repos/{BOOK_REPO}/releases/latest"
-        req = urllib.request.Request(
-            api_url, headers={"Accept": "application/vnd.github+json"}
-        )
-        with urllib.request.urlopen(req, timeout=10) as resp:
-            tag = json.loads(resp.read())["tag_name"]
-        return (
-            f"https://github.com/{BOOK_REPO}/releases/download"
-            f"/{tag}/{BOOK_FILENAME}"
-        )
-    except Exception:
-        return BOOK_FALLBACK_URL
-PDF_SOURCES += [
-    {
-        "title": "Crystallographic Powder Diffraction Analysis with GSAS-II: An Introduction to Rietveld Analysis",
-        "url": get_book_url(),
-        "category": "GSAS-II Rietveld textbook",
-    },
+BOOK_HTML_SOURCES: list[dict] = [
+    {"title": "Powder Diffraction Crystallography (Contents)", "url": f"{_BOOK_BASE}/HTML-template.html", "category": "Powder Crystallography Book"},
 ]
+for _i in range(1, 7):
+    BOOK_HTML_SOURCES.append({
+        "title": f"Powder Diffraction Crystallography Part {_i}",
+        "url": f"{_BOOK_BASE}/HTML-templatepa{_i}.html",
+        "category": "Powder Crystallography Book",
+    })
+for _i in range(1, 30):
+    BOOK_HTML_SOURCES.append({
+        "title": f"Powder Diffraction Crystallography Chapter {_i}",
+        "url": f"{_BOOK_BASE}/HTML-templatech{_i}.html",
+        "category": "Powder Crystallography Book",
+    })
+for _i in range(1, 150):
+    BOOK_HTML_SOURCES.append({
+        "title": f"Powder Diffraction Crystallography Section {_i}",
+        "url": f"{_BOOK_BASE}/HTML-templatese{_i}.html",
+        "category": "Powder Crystallography Book",
+    })
 
 # ── Dynamic tutorial list from GSAS-II's tutorialIndex.py ────────────────────
 # Fetched at ingest time so new tutorials are picked up automatically.
