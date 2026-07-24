@@ -1,12 +1,22 @@
 """
 Complete list of GSAS-II documentation sources.
 
-All URLs resolve under:
+All Home page, Help & Tutorial URLs resolve under:
     https://advancedphotonsource.github.io/GSAS-II-tutorials/
+    URL lists in HOME_SOURCES, HELP_SOURCES and TUTORIAL_SOURCES
 
 Additional HTML sources:
-  - GSAS-II Programmer's Guide — 24 pages from readthedocs (READTHEDOCS_SOURCES)
-  - Powder Diffraction Crystallography book — 185 HTML pages (BOOK_HTML_SOURCES, optional)
+  - GSAS-II Programmer's Guide — 24 pages from readthedocs (https://gsas-ii.readthedocs.io/en/latest)
+    URL list in READTHEDOCS_SOURCES
+    
+  - Powder Diffraction Crystallography book — 185 HTML pages (https://briantoby.github.io/PowderCrystallography)
+    URL list in BOOK_HTML_SOURCES
+
+  - Composite name:
+    WEBPAGE_SOURCES = HOME_SOURCES + HELP_SOURCES + READTHEDOCS_SOURCES
+
+Sources are selected based on the arguments supplied when ingest.py is run (--book includes BOOK_HTML_SOURCES)
+
 """
 
 BASE_URL = "https://advancedphotonsource.github.io/GSAS-II-tutorials"
@@ -433,7 +443,7 @@ def get_tutorial_sources() -> list[dict]:
 
 # ── Convenience aggregates ─────────────────────────────────────────────────────
 
-ALL_HTML_SOURCES = HOME_SOURCES + HELP_SOURCES + TUTORIAL_SOURCES
+#ALL_HTML_SOURCES = HOME_SOURCES + HELP_SOURCES + TUTORIAL_SOURCES
 
 # All non-tutorial HTML sources ingested by ingest.py
 WEBPAGE_SOURCES = HOME_SOURCES + HELP_SOURCES + READTHEDOCS_SOURCES
