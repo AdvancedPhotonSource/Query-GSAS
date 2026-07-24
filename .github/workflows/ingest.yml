@@ -1,4 +1,8 @@
 name: Build ChromaDB index
+# This creates a index to the GSAS-II documents and places it as
+# downloadable release file under the name 
+# https://github.com/<owner>/<repo>/releases/download/latest-chroma-db/chroma_db_latest.zip
+# (as well as a artifact)
 
 on:
   workflow_dispatch:
@@ -13,7 +17,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     permissions:
-      contents: read
+      #contents: read
+      contents: write   # changed: needed to create/update release/tag
 
     steps:
       - uses: actions/checkout@v4
@@ -58,3 +63,20 @@ jobs:
           name: chroma_db
           path: ci_data/chroma_db/
           retention-days: 90
+
+      - name: Package chroma_db as zip
+        run: |
+          cd ci_data
+          zip -r ../chroma_db_latest.zip chroma_db
+
+      - name: Create/Update stable release and upload asset
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest-chroma-db
+          name: Latest ChromaDB Index
+          body: Auto-updated ChromaDB index artifact from ingest workflow.
+          files: chroma_db_latest.zip
+          overwrite_files: true
+          make_latest: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
