@@ -202,10 +202,12 @@ def main():
     parser = argparse.ArgumentParser(description="Ingest GSAS-II docs into ChromaDB")
     parser.add_argument("--html-only", action="store_true", help="Skip PDF ingestion")
     parser.add_argument("--reset", action="store_true", help="Drop and rebuild collection")
+    parser.add_argument("--book", action="store_true",
+                        help="Include Powder Diffraction Crystallography book (185 HTML pages)")
     args = parser.parse_args()
 
     from chromadb.utils.embedding_functions import DefaultEmbeddingFunction
-    from .sources import PDF_SOURCES, WEBPAGE_SOURCES, get_tutorial_sources
+    from .sources import BOOK_HTML_SOURCES, PDF_SOURCES, WEBPAGE_SOURCES, get_tutorial_sources
 
     print("Loading embedding model (ONNX all-MiniLM-L6-v2)...")
     model = DefaultEmbeddingFunction()
@@ -219,8 +221,13 @@ def main():
 
     total_chunks = 0
 
+    html_sources = WEBPAGE_SOURCES + tutorial_sources
+    if args.book:
+        print(f"  Adding Powder Crystallography book ({len(BOOK_HTML_SOURCES)} HTML pages)")
+        html_sources = html_sources + BOOK_HTML_SOURCES
+
     print("\n=== Ingesting HTML pages ===")
-    for source in WEBPAGE_SOURCES + tutorial_sources:
+    for source in html_sources:
         total_chunks += ingest_html_source(source, collection, model)
 
     if not args.html_only:
