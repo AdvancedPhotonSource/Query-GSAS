@@ -429,7 +429,7 @@ _TUTORIAL_INDEX_URL = (
 )
 
 
-def get_tutorial_sources() -> list[dict]:
+def get_tutorial_sources():
     """Return tutorial sources from GSAS-II's canonical tutorialIndex.py.
 
     Uses ast.literal_eval (not eval) so untrusted file content is never executed.
@@ -459,7 +459,7 @@ def get_tutorial_sources() -> list[dict]:
         if not index_value:
             return TUTORIAL_SOURCES
 
-        sources = []
+        sources = ['GSAS-II tutorials']
         for entry in index_value:
             if len(entry) == 4:
                 directory, filename, title, _ = entry
