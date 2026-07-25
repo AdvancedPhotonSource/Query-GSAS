@@ -12,10 +12,7 @@ Additional HTML sources:
   - Powder Diffraction Crystallography book — 185 HTML pages (https://briantoby.github.io/PowderCrystallography)
     URL list in BOOK_HTML_SOURCES
 
-  - Composite name:
-    WEBPAGE_SOURCES = HOME_SOURCES + HELP_SOURCES + READTHEDOCS_SOURCES
-
-Sources are selected based on the arguments supplied when ingest.py is run (--book includes BOOK_HTML_SOURCES)
+Sources are selected based on the arguments supplied when ingest.py is run (e.g. --book includes BOOK_HTML_SOURCES)
 
 """
 
@@ -24,6 +21,7 @@ BASE_URL = "https://advancedphotonsource.github.io/GSAS-II-tutorials"
 # ── Home / installation pages (22) ────────────────────────────────────────────
 
 HOME_SOURCES = [
+    "GSAS-II Home pages",
     {"title": "GSAS-II Home",                    "url": f"{BASE_URL}/index.html",             "category": "Home"},
     {"title": "About GSAS-II",                   "url": f"{BASE_URL}/AboutGSASII.html",        "category": "Home"},
     {"title": "Documentation Overview",          "url": f"{BASE_URL}/documentation.html",      "category": "Home"},
@@ -51,6 +49,7 @@ HOME_SOURCES = [
 # ── Help pages (42, skipping 404.html) ────────────────────────────────────────
 
 HELP_SOURCES = [
+    "GSAS-II Help pages",
     {"title": "Help: Application Window",            "url": f"{BASE_URL}/help/applicationwindow.html",   "category": "Help"},
     {"title": "Help: Main Menu",                     "url": f"{BASE_URL}/help/mainmenu.html",            "category": "Help"},
     {"title": "Help: Data Tree",                     "url": f"{BASE_URL}/help/datatree.html",            "category": "Help"},
@@ -98,6 +97,7 @@ HELP_SOURCES = [
 # ── Tutorials (62, skipping tutorial_template) ────────────────────────────────
 
 TUTORIAL_SOURCES = [
+    "GSAS-II Tutorials",
     # Getting Started
     {"title": "Starting GSAS-II",
      "url": f"{BASE_URL}/StartingGSASII/Starting%20GSAS.htm",
@@ -328,6 +328,7 @@ TUTORIAL_SOURCES = [
 _RTD = "https://gsas-ii.readthedocs.io/en/latest"
 
 READTHEDOCS_SOURCES = [
+    "GSAS-II programmers' manual",
     {"title": "GSAS-II Packages Overview",          "url": f"{_RTD}/packages.html",          "category": "Programmer's Guide"},
     {"title": "GSAS-II Versioning",                 "url": f"{_RTD}/versioning.html",         "category": "Programmer's Guide"},
     {"title": "Object/Variable Organization",       "url": f"{_RTD}/objvarorg.html",          "category": "Programmer's Guide"},
@@ -351,7 +352,7 @@ READTHEDOCS_SOURCES = [
     {"title": "Import modules",                     "url": f"{_RTD}/imports.html",            "category": "Programmer's Guide"},
     {"title": "Export modules",                     "url": f"{_RTD}/exports.html",            "category": "Programmer's Guide"},
     {"title": "G2tools module",                     "url": f"{_RTD}/G2tools.html",            "category": "Programmer's Guide"},
-    {"title": "GSAS-II General Index",              "url": f"{_RTD}/indices.html",            "category": "Programmer's Guide"},
+    #{"title": "GSAS-II General Index",              "url": f"{_RTD}/indices.html",            "category": "Programmer's Guide"},
 ]
 
 # ── PDF sources ────────────────────────────────────────────────────────────────
@@ -364,7 +365,8 @@ PDF_SOURCES = []  # Book and Programmer's Guide now available as HTML
 
 _BOOK_BASE = "https://briantoby.github.io/PowderCrystallography"
 
-BOOK_HTML_SOURCES: list[dict] = [
+BOOK_HTML_SOURCES = [
+    "Powder Diffraction Crystallography book",
     {"title": "Powder Diffraction Crystallography (Contents)", "url": f"{_BOOK_BASE}/HTML-template.html", "category": "Powder Crystallography Book"},
 ]
 for _i in range(1, 7):
@@ -439,11 +441,3 @@ def get_tutorial_sources() -> list[dict]:
 
     except Exception:
         return TUTORIAL_SOURCES
-
-
-# ── Convenience aggregates ─────────────────────────────────────────────────────
-
-#ALL_HTML_SOURCES = HOME_SOURCES + HELP_SOURCES + TUTORIAL_SOURCES
-
-# All non-tutorial HTML sources ingested by ingest.py
-WEBPAGE_SOURCES = HOME_SOURCES + HELP_SOURCES + READTHEDOCS_SOURCES
