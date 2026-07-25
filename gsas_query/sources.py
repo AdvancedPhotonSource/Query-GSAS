@@ -365,29 +365,60 @@ PDF_SOURCES = []  # Book and Programmer's Guide now available as HTML
 
 _BOOK_BASE = "https://briantoby.github.io/PowderCrystallography"
 
+import requests
+def url_exists(url):
+    try:
+        # allow_redirects=True ensures 301/302 redirects resolve to the final page
+        response = requests.head(url, allow_redirects=True, timeout=5)
+        return response.status_code == 200
+    except requests.RequestException:
+        return False
+
+
 BOOK_HTML_SOURCES = [
     "Powder Diffraction Crystallography book",
     {"title": "Powder Diffraction Crystallography (Contents)", "url": f"{_BOOK_BASE}/HTML-template.html", "category": "Powder Crystallography Book"},
 ]
-for _i in range(1, 7):
-    BOOK_HTML_SOURCES.append({
-        "title": f"Powder Diffraction Crystallography Part {_i}",
-        "url": f"{_BOOK_BASE}/HTML-templatepa{_i}.html",
-        "category": "Powder Crystallography Book",
-    })
-for _i in range(1, 30):
-    BOOK_HTML_SOURCES.append({
-        "title": f"Powder Diffraction Crystallography Chapter {_i}",
-        "url": f"{_BOOK_BASE}/HTML-templatech{_i}.html",
-        "category": "Powder Crystallography Book",
-    })
-for _i in range(1, 150):
-    BOOK_HTML_SOURCES.append({
-        "title": f"Powder Diffraction Crystallography Section {_i}",
-        "url": f"{_BOOK_BASE}/HTML-templatese{_i}.html",
-        "category": "Powder Crystallography Book",
-    })
+#for _i in range(1, 7):  # these are book section tables of contents, no text
+#    BOOK_HTML_SOURCES.append({
+#        "title": f"Powder Diffraction Crystallography Part {_i}",
+#        "url": f"{_BOOK_BASE}/HTML-templatepa{_i}.html",
+#        "category": "Powder Crystallography Book",
+#    })
+_i = 0
+lastURL = ''
+while True:
+    _i += 1
+#for _i in range(1, 30):   # these are mostly tables of contents & no text, but a few have text
+    url = f"{_BOOK_BASE}/HTML-templatech{_i}.html"
+    if url_exists(url):
+        lastURL = url
+        BOOK_HTML_SOURCES.append({
+            "title": f"Powder Diffraction Crystallography Chapter {_i}",
+            "url": url,
+            "category": "Powder Crystallography Book",
+        })
+    else:
+        print(f'Last Powder Diffraction Crystallography Chapter is {_i-1} ({lastURL})')
+        break
 
+_i = 0
+lastURL = ''
+while True:
+    _i += 1
+#for _i in range(1, 150):
+    url = f"{_BOOK_BASE}/HTML-templatese{_i}.html"
+    if url_exists(url):
+        lastURL = url
+        BOOK_HTML_SOURCES.append({
+            "title": f"Powder Diffraction Crystallography Section {_i}",
+            "url": url,
+            "category": "Powder Crystallography Book",
+        })
+    else:
+        print(f'Last Powder Diffraction Crystallography Section is {_i-1}  ({lastURL})')
+        break
+        
 # ── Dynamic tutorial list from GSAS-II's tutorialIndex.py ────────────────────
 # Fetched at ingest time so new tutorials are picked up automatically.
 # Falls back to the hardcoded TUTORIAL_SOURCES on any network or parse error.

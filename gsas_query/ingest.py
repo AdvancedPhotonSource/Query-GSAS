@@ -235,14 +235,14 @@ def main():
 
     print("\n=== Ingesting HTML pages ===")
     for pagelist in html_sources:
-        i = 0; print("NEXT")  # DEBUG
+#        i = 0; print("NEXT")  # DEBUG
         for source in pagelist:
             if type(source) is str:
-                print(f"*** processing {source}")
+                print(f"\n*** processing {source}")
                 continue
-            i += 1  # DEBUG
+#            i += 1  # DEBUG
             total_chunks += ingest_html_source(source, collection, model)
-            if i >= 5: break  # DEBUG
+#            if i >= 5: break  # DEBUG
     if not args.html_only:
         print("\n=== Ingesting PDFs ===")
         from .sources import PDF_SOURCES
