@@ -256,8 +256,10 @@ def main():
     for pagelist in html_sources:
         source_chunks = 0
         source_words = 0
+        title = ''
         for source in pagelist:
             if type(source) is str:
+                title = source
                 print(f"\n*** processing {source}")
                 continue
             chunks,words = ingest_html_source(source, collection, model)
@@ -265,7 +267,7 @@ def main():
             source_words += words
             #total_chunks += chunks
             total_words += words
-        print(f"Totals for {source}: words={source_words}, chunks={source_chunks}")
+        print(f"Totals for {title}: words={source_words}, chunks={source_chunks}")
     if not args.html_only:
         print("\n=== Ingesting PDFs ===")
         from .sources import PDF_SOURCES
