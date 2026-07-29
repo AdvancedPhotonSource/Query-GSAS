@@ -45,7 +45,7 @@ HOME_SOURCES = [
     {"title": "Bug Reporting",                   "url": f"{BASE_URL}/bug.html",               "category": "Home"},
     {"title": "General Index",                   "url": f"{BASE_URL}/genindex.html",           "category": "Home"},
 ]
-
+    
 # ── Help pages (42, skipping 404.html) ────────────────────────────────────────
 
 HELP_SOURCES = [
@@ -376,12 +376,12 @@ def url_exists(url):
 
 
 BOOK_HTML_SOURCES = [
-    "Powder Diffraction Crystallography book",
-    {"title": "Powder Diffraction Crystallography (Contents)", "url": f"{_BOOK_BASE}/HTML-template.html", "category": "Powder Crystallography Book"},
+    "Powder Diff. Cryst. Book book",
+    {"title": "Powder Diff. Cryst. Book (Contents)", "url": f"{_BOOK_BASE}/HTML-template.html", "category": "Powder Crystallography Book"},
 ]
 #for _i in range(1, 7):  # these are book section tables of contents, no text
 #    BOOK_HTML_SOURCES.append({
-#        "title": f"Powder Diffraction Crystallography Part {_i}",
+#        "title": f"Powder Diff. Cryst. Book Part {_i}",
 #        "url": f"{_BOOK_BASE}/HTML-templatepa{_i}.html",
 #        "category": "Powder Crystallography Book",
 #    })
@@ -394,12 +394,12 @@ while True:
     if url_exists(url):
         lastURL = url
         BOOK_HTML_SOURCES.append({
-            "title": f"Powder Diffraction Crystallography Chapter {_i}",
+            "title": f"Powder Diff. Cryst. Book Chapter {_i}",
             "url": url,
             "category": "Powder Crystallography Book",
         })
     else:
-        print(f'Last Powder Diffraction Crystallography Chapter is {_i-1} ({lastURL})')
+        print(f'Last Powder Diff. Cryst. Book Chapter is {_i-1} ({lastURL})')
         break
 
 _i = 0
@@ -411,12 +411,12 @@ while True:
     if url_exists(url):
         lastURL = url
         BOOK_HTML_SOURCES.append({
-            "title": f"Powder Diffraction Crystallography Section {_i}",
+            "title": f"Powder Diff. Cryst. Book Section {_i}",
             "url": url,
             "category": "Powder Crystallography Book",
         })
     else:
-        print(f'Last Powder Diffraction Crystallography Section is {_i-1}  ({lastURL})')
+        print(f'Last Powder Diff. Cryst. Book Section is {_i-1}  ({lastURL})')
         break
         
 # ── Dynamic tutorial list from GSAS-II's tutorialIndex.py ────────────────────

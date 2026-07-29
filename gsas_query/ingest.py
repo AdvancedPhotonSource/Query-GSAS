@@ -225,24 +225,38 @@ def main():
 
     total_chunks = 0
 
+    # add a notes to distinguish information sources
+    # W: Web; T: Tutorial; M: Manual; (Help pages & Book already tagged.)
+    for i in HOME_SOURCES:
+        if 'title' in i:
+            i['title'] += ' (W)'
+
+    for i in tutorial_sources:
+        if 'title' in i:
+            i['title'] += ' (T)'
+    
     html_sources = [HOME_SOURCES, HELP_SOURCES, tutorial_sources]
     if args.manual:
+        for i in READTHEDOCS_SOURCES:
+            if 'title' in i:
+                i['title'] += ' (M)'
+
         print(f"  Adding Programmers' manual ({len(READTHEDOCS_SOURCES)} HTML pages)")
         html_sources = html_sources + [READTHEDOCS_SOURCES]
     if args.book:
+        for i in BOOK_HTML_SOURCES:
+            if 'title' in i:
+                i['title'] += ' (B)'
         print(f"  Adding Powder Crystallography book ({len(BOOK_HTML_SOURCES)} HTML pages)")
         html_sources = html_sources + [BOOK_HTML_SOURCES]
 
     print("\n=== Ingesting HTML pages ===")
     for pagelist in html_sources:
-#        i = 0; print("NEXT")  # DEBUG
         for source in pagelist:
             if type(source) is str:
                 print(f"\n*** processing {source}")
                 continue
-#            i += 1  # DEBUG
             total_chunks += ingest_html_source(source, collection, model)
-#            if i >= 5: break  # DEBUG
     if not args.html_only:
         print("\n=== Ingesting PDFs ===")
         from .sources import PDF_SOURCES

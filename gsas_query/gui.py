@@ -26,8 +26,8 @@ def _get_gsas_font_size(default: int = 10) -> int:
     """Return the font size to use, in points.
 
     Priority:
-      1. GSAS_QUERY_FONT_SIZE env var (explicit override)
-      2. GSAS-II's own preference store (GSASIIpath.GetConfigValue)
+      1. specified font size in show_assistant() or GSASQueryDialog() call
+      2. GSAS_QUERY_FONT_SIZE env var (explicit override)
       3. *default* (10 pt)
     """
     env = os.environ.get("GSAS_QUERY_FONT_SIZE")
@@ -36,11 +36,6 @@ def _get_gsas_font_size(default: int = 10) -> int:
             return int(env)
         except ValueError:
             pass
-    try:
-        import GSASIIpath                                     # available inside GSAS-II
-        return int(GSASIIpath.GetConfigValue("Font size", default))
-    except Exception:
-        pass
     return default
 
 
@@ -65,22 +60,41 @@ def _launch_ollama() -> "subprocess.Popen | None":
     """Start `ollama serve` if not already running. Returns the process we started, or None."""
     if _is_ollama_running():
         return None
-    try:
-        proc = subprocess.Popen(
-            [_ollama_bin(), "serve"],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        )
-    except FileNotFoundError:
-        return None
-    for _ in range(12):          # wait up to 6 s
-        time.sleep(0.5)
-        if _is_ollama_running():
-            # Register a fallback: if GSAS-II exits without closing the dialog
-            # (EVT_CLOSE won't fire for child frames), atexit still kills Ollama.
-            atexit.register(proc.terminate)
-            return proc
-    proc.terminate()
+    repeat = True
+    cmdarg = "serve"
+    sec = 6
+    while repeat:
+        repeat = False
+        try:
+            proc = subprocess.Popen(
+                [_ollama_bin(), cmdarg],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.PIPE,
+                encoding='UTF-8'
+                )
+        except FileNotFoundError:
+            return None
+        for _ in range(sec*2):          # wait up to `sec` s
+            time.sleep(0.5)
+            if _is_ollama_running():
+                # Register a fallback: if GSAS-II exits without closing the dialog
+                # (EVT_CLOSE won't fire for child frames), atexit still kills Ollama.
+                atexit.register(proc.terminate)
+                return proc
+            elif cmdarg == "serve":
+                # on Mac provided binary runs w/o server. Longer timeout, as 
+                # one may need to respond to GUI questions
+                for line in proc.stderr:
+                    if "serve command not supported" in line:
+                        repeat = True
+                        sec = 60
+                        break
+                else:
+                    continue
+                break
+        print(f'Failed to launch Ollama server with "{_ollama_bin()} {cmdarg}"')
+        cmdarg = ''  # if repeat, try again without serve        
+        proc.terminate()
     return None
 
 try:
@@ -164,7 +178,7 @@ class GSASQueryDialog(wx.Frame):
     Call show_assistant() rather than instantiating directly.
     """
 
-    def __init__(self, parent):
+    def __init__(self, parent, fontsize=None):
         super().__init__(
             parent,
             title="GSAS-II Documentation Assistant",
@@ -174,7 +188,10 @@ class GSASQueryDialog(wx.Frame):
         self._history: list[dict] = []
         self._busy = False
         self._ollama_proc: "subprocess.Popen | None" = None
-        self._font_size = _get_gsas_font_size(default=10)
+        if fontsize is None:
+            self._font_size = _get_gsas_font_size(default=10)
+        else:
+            self._font_size = fontsize
         self._build_ui()
         self.Centre()
         self.Bind(wx.EVT_CLOSE, self._on_close)
@@ -410,7 +427,7 @@ class GSASQueryDialog(wx.Frame):
 _instance: GSASQueryDialog | None = None
 
 
-def show_assistant(parent=None) -> GSASQueryDialog:
+def show_assistant(parent=None,fontsize=None) -> GSASQueryDialog:
     """
     Show the GSAS-II Documentation Assistant dialog.
 
@@ -422,7 +439,7 @@ def show_assistant(parent=None) -> GSASQueryDialog:
     """
     global _instance
     if _instance is None or not _instance.IsShown():
-        _instance = GSASQueryDialog(parent)
+        _instance = GSASQueryDialog(parent,fontsize=fontsize)
         _instance.Show()
     else:
         _instance.Raise()
