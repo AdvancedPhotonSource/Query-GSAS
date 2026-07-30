@@ -106,13 +106,18 @@ def ingest_html_source(source: dict, collection, model):
     title = source["title"]
     category = source["category"]
 
-    print(f"  Fetching: {title}\n\t({url})")
-    try:
-        resp = requests.get(url, timeout=30)
-        resp.raise_for_status()
-    except Exception as e:
-        print(f"  ERROR fetching {url}: {e}")
-        return 0,0
+    for i in range(4):  # repeat up to 4 times if there is a 503 error
+        print(f"  Fetching: {title}\n\t({url})")
+        try:
+            resp = requests.get(url, timeout=30)
+            resp.raise_for_status()
+            break
+        except Exception as e:
+            print(f"  ERROR fetching {url}: {e}")
+            if "503" in str(e):
+                time.sleep(10.)
+                continue
+            return 0,0
 
     sections,word_count = extract_html_sections(resp.text, title)
     # Use a dict keyed by doc_id to deduplicate identical chunks within the source.
