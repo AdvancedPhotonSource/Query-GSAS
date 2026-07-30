@@ -221,7 +221,7 @@ def main():
     from chromadb.utils.embedding_functions import DefaultEmbeddingFunction
     from .sources import get_tutorial_sources
     from .sources import HOME_SOURCES, HELP_SOURCES, TUTORIAL_SOURCES
-    from .sources import READTHEDOCS_SOURCES, BOOK_HTML_SOURCES
+    from .sources import READTHEDOCS_SOURCES, get_book_sources
 
     print("Loading embedding model (ONNX all-MiniLM-L6-v2)...")
     model = DefaultEmbeddingFunction()
@@ -255,7 +255,7 @@ def main():
         print(f"  Adding Programmers' manual ({len(READTHEDOCS_SOURCES)} HTML pages)")
         html_sources = html_sources + [READTHEDOCS_SOURCES]
     if args.book:
-        html_sources = html_sources + [BOOK_HTML_SOURCES]
+        html_sources = html_sources + [get_book_sources()]
 
     print("\n=== Ingesting HTML pages ===")
     for pagelist in html_sources:
