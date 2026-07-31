@@ -1,0 +1,285 @@
+\section{System Design and Implementation}
+\label{sec:methods}
+
+Figure~\ref{fig:architecture} shows the overall system architecture.
+\textit{Query-GSAS} is structured around four loosely coupled components:
+a documentation ingestion pipeline, a persistent vector store,
+a retrieval and ranking engine, and a generation backend.
+All components can be run on the user's local machine. Thus, it can be run in a manner where no data leaves the host at any point, even on an air-gapped computer.
+
+% ── 2.1 Documentation corpus ─────────────────────────────────────────────────
+\subsection{Documentation corpus and ingestion}
+\label{sec:corpus}
+
+\subsubsection{Source catalogue}
+
+The GSAS-II documentation is distributed across several publicly accessible
+web servers.
+Table~\ref{tab:sources} summarises the sources included in the index.
+
+\begin{table}[h]
+  \centering
+  \caption{Documentation HTML files indexed by \textit{Query-GSAS}.}
+  \label{tab:sources}
+  \begin{tabular}{lccc}
+    \toprule
+    Category & Files & Words & Chunks \\
+    \midrule
+    Home pages (installation, etc.)    & 22 & 22K & 329 \\
+    Help manual sections               & 42 & 54K & 554 \\
+    Tutorials (dynamically fetched)    & 65 & 167K & 1{,}437 \\
+    Programmer's Guide (ReadTheDocs)   & 23 & 143K & 2{,}740 \\
+    Powder Crystallography textbook    & 179 & 115K  & 778 \\
+    \midrule
+    \textit{Total}                     & 331 & 501K & 5{,}838 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+Tutorial URLs are resolved dynamically at ingest time by fetching from the project
+repository the
+GSAS-II canonical \texttt{tutorialIndex.py} file that is used within GSAS-II for 
+indexing the tutorials. The URL list is extracted via \texttt{ast.literal\_eval}
+--- avoiding \texttt{eval}/\texttt{exec} for security.
+This ensures that newly published tutorials are automatically included
+without manual source-list maintenance. 
+While two larger documents are available as monolithic PDF files, and \textit{Query-GSAS} is able to ingest the content in that format, we have found that paginated HTML content is preferable for this purpose, as \textit{Query-GSAS} is then able to guide users to the appropriate documentation section and then open that resource for them in a browser. Further, use of HTML preserves hyperlinks, section
+headings, and code-block formatting that are degraded by PDF parsing.
+In HTML form, the Programmer's Guide is provided as 23 individual HTML pages on the ReadTheDocs service
+\url{https://gsas-ii.readthedocs.io/en/latest/}, one per module. Both the PDF and HTML forms are generated whenever the GSAS-II source code is updated on GitHub.
+The \textit{Powder Diffraction Crystallography} textbook\citep{toby2024book}, under development, has been formatted as a series of HTML pages specifically for use in \textit{Query-GSAS} and the pages are hosted via the book repository's GitHub Pages site.
+The HTML will be rebuilt from the \LaTeX\ sources each time a new book edition is tagged.
+The naming pattern used for the generated web pages of the Powder Crystallography textbook allows the indexing routine to find the full contents without hard-coding all the file names. 
+
+\subsubsection{Ingestion pipeline}
+
+Each HTML source is fetched with the \texttt{requests} library and
+parsed using \texttt{BeautifulSoup4} with the \texttt{lxml} backend.
+Boilerplate elements (navigation bars, footers, scripts, and images)
+are removed, and the remaining content is segmented into sections by
+heading level (H1--H4).
+PDF documents, when included, are parsed using the \texttt{pypdf} module, with pages
+batched in groups of three to maintain cross-page contextual continuity.
+
+Sections are divided into overlapping text chunks using a
+sentence-boundary aware splitting algorithm: each chunk is at most
+1{,}200 characters with a 150-character overlap, and splits are
+placed at the nearest preceding sentence boundary within the
+sliding window, avoiding severed mid-sentence context.
+Each chunk is assigned a content-hash identifier derived from the
+MD5 digest of its source URL, section heading, and full text content,
+enabling idempotent \texttt{upsert} operations: re-running ingestion
+on an already-indexed source updates only modified chunks.
+
+Embeddings are produced using the \texttt{BAAI/bge-base-en-v1.5}
+model \citep{bge2023embedding} served via the \texttt{fastembed} ONNX
+runtime, which requires no PyTorch installation.
+This model produces 768-dimensional dense vectors and consistently
+outperforms the smaller \texttt{all-MiniLM-L6-v2}
+\citep{wang2020minilm,reimers2019sbert} on domain-specific retrieval
+benchmarks while remaining practical for CPU-only deployment.
+Full ingestion of all HTML sources in Table \ref{tab:sources} completes in approximately
+30 minutes on a modern laptop CPU and produces a $\sim$65\,MB database. To avoid the demands for running this indexing process, a GitHub Action is used to generate this weekly and a zip-compressed copy of the database made available. When \textit{Query-GSAS} is run from inside GSAS-II, the user is offered the option to download the database. 
+
+% ── 2.2 Vector store ─────────────────────────────────────────────────────────
+\subsection{Vector store}
+
+Embeddings, raw text, and per-chunk metadata (source URL, page title,
+section heading, and source category) are stored in a ChromaDB
+\citep{chromadb2023} persistent collection using the cosine similarity
+metric.
+The index is stored locally at \texttt{\textasciitilde/.GSASII/query\_gsas2/chroma\_db}
+by default, co-located with other GSAS-II user data and separating it
+from the package installation.
+The storage location can be overridden via the
+\texttt{GSAS\_QUERY\_DATA\_DIR} environment variable.
+
+ChromaDB is selected over alternatives (FAISS, Qdrant, Milvus) because
+it requires no external service process, stores data as a portable
+SQLite database alongside raw vector files, and supports incremental
+\texttt{upsert} operations that make re-indexing individual updated
+sources efficient.
+
+% ── 2.3 Retrieval ────────────────────────────────────────────────────────────
+\subsection{Retrieval and ranking}
+\label{sec:retrieval}
+
+At query time, the user's question is embedded using the same
+\texttt{BAAI/bge-base-en-v1.5} model (loaded once and cached in memory via
+\texttt{functools.lru\_cache}) and the top 30 nearest vectors are
+initially retrieved by approximate nearest-neighbour search.
+To maximise source diversity, a URL-deduplication step retains only
+the highest-scoring chunk from each unique source page; the resulting
+ranked list is then truncated to the top six chunks forwarded to the
+generation backend.
+Retrieved scores are linearly normalised within the selected set:
+the best-matching chunk is assigned relevance 1.0 and the weakest 0.0,
+with intermediate chunks scaled proportionally.
+These normalised scores are provided to the user in the answer UI.
+
+
+% ── 2.4 Generation ───────────────────────────────────────────────────────────
+\subsection{Text generation and source citation}
+\label{sec:inference}
+
+\textit{Query-GSAS} supports four text generation backends selected via the
+\texttt{LLM\_BACKEND} environment variable (Table~\ref{tab:backends}).
+Priority order when \texttt{LLM\_BACKEND} is unset: if
+\texttt{llama-cpp-python} is importable it is selected automatically;
+otherwise Ollama is used.
+
+\begin{table}[h]
+  \centering
+  \caption{Supported generation backends.}
+  \label{tab:backends}
+  \begin{tabular}{llll}
+    \toprule
+    Backend & Default model & Data locality & Notes \\
+    \midrule
+    \texttt{ollama}      & Llama 3 8B            & Fully local & Separate server process \\
+    \texttt{llama\_cpp}  & Any GGUF model        & Fully local & In-process; no daemon \\
+    \texttt{anthropic}   & Claude Sonnet 4       & External API & API key required \\
+    \texttt{retrieval}   & ---                   & Fully local & No LLM; raw chunks \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+The \textbf{Ollama} backend \citep{ollama2023} serves quantised large
+language models on consumer hardware via a local REST API.
+Any model available via \texttt{ollama pull} can be substituted
+(\emph{e.g.}\ Mistral 7B, Qwen2.5 7B, Llama 3 70B) by setting environment variable 
+\texttt{OLLAMA\_MODEL}.
+The default for this, the Llama 3 8B model, \citep{meta2024llama3}, in 4-bit quantisation
+requires approximately 5\,GB of storage and 6\,GB of RAM.
+The wxPython GUI initiates and ends the Ollama server process
+automatically with the dialog window lifecycle, registering a
+\texttt{atexit} handler to ensure clean termination even when
+GSAS-II exits without closing the assistant dialog.
+
+The \textbf{\texttt{llama-cpp-python}} backend \citep{llamacpp2023}
+loads GGUF model files in-process, requiring no separate server daemon.
+It is auto-detected at startup and selected over Ollama when
+\texttt{llama-cpp-python} can be imported and \texttt{LLM\_BACKEND}
+is not set.
+The model is loaded once and cached via
+\texttt{@lru\_cache(maxsize=1)}, avoiding the 3--5\,s
+reload penalty on each query.
+Tested with Qwen2.5-3B-Instruct \citep{qwen2025} Q4\_K\_M
+($\approx$2\,GB), which provides well formatted responses to queries on CPU-only hardware.
+
+The \textbf{\texttt{retrieval}} backend returns the raw retrieved
+chunks without LLM synthesis, providing a zero-dependency fallback
+for environments where no local LLM is available and for debugging. 
+The \textbf{\texttt{anthropic}} backend calls the Anthropic Messages
+API and is provided for settings where answer quality and speed is prioritised
+over data locality and cost.
+
+The text generation prompt is constructed as a system instruction followed
+by the six numbered context passages and the user's question.
+The system prompt instructs the model to use precise crystallographic
+terminology, preserve numbered procedural steps, and insert inline
+numeric citations $[N]$ immediately after each supported factual claim.
+
+\subsubsection{Citation injection and bibliography rendering}
+\label{sec:citations}
+
+Smaller open-weight models (3B--8B parameters) do not reliably insert
+inline citations for every claim, even when explicitly instructed.
+To ensure complete citation coverage, a post-processing step scans the
+generated answer line by line and matches each substantive line to the
+context chunk with the greatest content-word overlap (excluding
+domain-generic stop words).
+Lines with at least four non-trivial words in common with a context
+chunk receive an appended $[N]$ citation marker.
+
+Citation numbers are subsequently renumbered in order of first
+appearance in the text, so that the first cited source is always
+$[1]$, the second $[2]$, and so on --- consistent with numbered
+citation conventions in academic publishing.
+Chunks retrieved but not cited inline are appended at the end of
+the citation map so that the bibliography remains complete.
+
+In the web UI, occurrences of $[N]$ in the rendered answer are
+replaced with clickable superscript hyperlinks (styled as
+\texttt{.cite-link}) that open the exact source section in a new
+tab.
+A journal-style numbered bibliography is rendered below the answer
+bubble, listing each cited source as
+\textit{[N] Page title --- Section heading}, linked to the source URL.
+In the CLI, source URLs and normalised relevance scores are printed
+below the answer text.
+
+% ── 2.5 GSAS-II native integration ───────────────────────────────────────────
+\subsection{GSAS-II native Help menu integration}
+\label{sec:integration}
+
+\textit{Query-GSAS} is designed for seamless integration into the GSAS-II
+graphical interface via a single public API call:
+
+\begin{lstlisting}[language=Python]
+from gsas_query.gui import show_assistant
+show_assistant(parent=self)   # parent: the GSAS-II main window
+\end{lstlisting}
+
+This opens a modeless \texttt{wx.Frame} that floats above the GSAS-II
+workspace, allowing the user to ask questions while continuing to
+interact with the main application.
+The assistant accepts the GSAS-II window as its parent, participates
+correctly in the wxPython event hierarchy, and can be wired directly
+to a Help menu item without any external process or configuration.
+
+Because the GUI may be embedded in GSAS-II rather than run
+standalone, two shutdown paths are required.
+The dialog's \texttt{EVT\_CLOSE} handler terminates Ollama (if
+\textit{Query-GSAS} started it) and unregisters the \texttt{atexit} fallback.
+The \texttt{atexit} fallback itself handles the case where GSAS-II
+exits --- closing all child windows without firing \texttt{EVT\_CLOSE} ---
+ensuring that an orphaned Ollama server process does not remain after the session ends.
+
+The \textit{Query-GSAS} package is vendored within the current distribution files for GSAS-II and a command is placed in the GUI's Help menu, ``Help via LLM Docs Search''.  
+When this command is first invoked, the GSAS-II code will prompt and then assist the user to install the conda packages (chromadb, llama\_cpp, and huggingface\_hub) and download the files (the Qwen2.5-3B-Instruct Q4\_K\_M model and the ChromaDB index) needed to run \textit{Query-GSAS}. 
+The Ollama backend can also be used within the vendored copy of \textit{Query-GSAS}, but the user must install that software independently and define the \texttt{OLLAMA\_BIN} environment variable with the Ollama server executable location before starting GSAS-II. 
+
+% ── 2.6 Deployment ───────────────────────────────────────────────────────────
+\subsection{Deployment targets}
+\label{sec:deployment}
+
+When installed independently of GSAS-II, \textit{Query-GSAS} provides three deployment interfaces from a single \texttt{pip}-installable package:
+
+\paragraph{Command-line interface.}
+The \texttt{gsas-query} command supports single-shot and interactive
+(multi-turn) modes.
+In interactive mode a conversation history of up to 12 turns is
+maintained and prepended to each prompt, enabling follow-up questions
+that reference prior context.
+
+\paragraph{Desktop GUI.}
+A modeless wxPython frame is designed for embedding in the GSAS-II
+Help menu (Section~\ref{sec:integration}).
+The dialog is launched with \texttt{gsas-query --gui} or
+programmatically via \texttt{show\_assistant()}.
+RAG queries run in a background thread to keep the GSAS-II
+main event loop responsive, and source links are rendered as
+clickable labels that open the referenced documentation in
+the system browser. The GUI window generated here renders the markdown formatting used for text generated by the backend, and when used with internet access, will use the MathJax package to format equations.
+
+\paragraph{Web application.}
+A FastAPI application (\texttt{gsas-query-web}) serves a single-page
+HTML/JavaScript chat UI at \texttt{http://localhost:8000}.
+The server exposes \texttt{POST /chat}, \texttt{GET /stats}, and
+\texttt{GET /health} endpoints.
+A protected \texttt{POST /ingest} route triggers re-indexing of
+the documentation corpus without restarting the server, suitable
+for automated nightly refresh.
+Per-IP rate limiting (default 30 requests per minute) is applied
+at the application layer.
+
+\paragraph{Package structure.}
+All functionality is encapsulated in the \texttt{gsas\_query} Python
+package following standard \texttt{pyproject.toml}/hatchling conventions.
+User data (the ChromaDB index) is stored outside the package in
+\texttt{\textasciitilde/.GSASII/query\_gsas2/} so that package upgrades do
+not affect the index.
+Optional dependencies are declared as extras:
+\texttt{gsas-query[llama\_cpp]} installs \texttt{llama-cpp-python};
+\texttt{gsas-query[anthropic]} installs the Anthropic SDK.

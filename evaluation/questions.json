@@ -1,0 +1,356 @@
+{
+  "description": "40-question held-out evaluation set for Query-GSAS retrieval quality assessment. Ground-truth URLs are the documentation page(s) that contain the answer. A retrieved chunk is considered a hit if its URL matches any ground-truth URL for that question.",
+  "index": "~/.GSASII/query_gsas2/chroma_db",
+  "collection": "gsasii_docs",
+  "questions": [
+    {
+      "id": 1,
+      "category": "Rietveld",
+      "question": "How do I start a Rietveld refinement in GSAS-II for laboratory X-ray powder data?",
+      "ground_truth_urls": [
+        "https://advancedphotonsource.github.io/GSAS-II-tutorials/LabData/Laboratory X.htm"
+      ]
+    },
+    {
+      "id": 2,
+      "category": "Rietveld",
+      "question": "What does the Rwp value mean and how do I interpret it in a Rietveld fit?",
+      "ground_truth_urls": [
+        "https://advancedphotonsource.github.io/GSAS-II-tutorials/help/powder.html",
+        "https://advancedphotonsource.github.io/GSAS-II-tutorials/LabData/Laboratory X.htm",
+        "https://briantoby.github.io/PowderCrystallography/HTML-templatese54.html",
+        "https://briantoby.github.io/PowderCrystallography/HTML-templatese104.html"
+      ]
+    },
+    {
+      "id": 3,
+      "category": "Rietveld",
+      "question": "How do I fit the background in GSAS-II using fixed points?",
+      "ground_truth_urls": [
+        "https://advancedphotonsource.github.io/GSAS-II-tutorials/BkgFit/FitBkgTut.htm"
+      ]
+    },
+    {
+      "id": 4,
+      "category": "Rietveld",
+      "question": "How do I refine Mustrain (microstrain broadening) parameters in GSAS-II?",
+      "ground_truth_urls": [
+        "https://advancedphotonsource.github.io/GSAS-II-tutorials/help/powder.html",
+        "https://advancedphotonsource.github.io/GSAS-II-tutorials/help/powdersample.html",
+        "https://briantoby.github.io/PowderCrystallography/HTML-templatese76.html",
+        "https://briantoby.github.io/PowderCrystallography/HTML-templatese81.html"
+      ]
+    },
+    {
+      "id": 5,
+      "category": "Rietveld",
+      "question": "How do I perform a combined X-ray and constant-wavelength neutron Rietveld refinement?",
+      "ground_truth_urls": [
+        "https://advancedphotonsource.github.io/GSAS-II-tutorials/CWCombined/Combined refinement.htm"
+      ]
+    },
+    {
+      "id": 6,
+      "category": "Rietveld",
+      "question": "How do I create a publication-ready Rietveld plot in GSAS-II?",
+      "ground_truth_urls": [
+        "https://advancedphotonsource.github.io/GSAS-II-tutorials/RietPlot/PublicationPlot.htm"
+      ]
+    },
+    {
+      "id": 7,
+      "category": "Rietveld",
+      "question": "How do I refine sample displacement and transparency parameters for Debye-Scherrer geometry?",
+      "ground_truth_urls": [
+        "https://advancedphotonsource.github.io/GSAS-II-tutorials/help/powder.html",
+        "https://advancedphotonsource.github.io/GSAS-II-tutorials/help/powdersample.html",
+        "https://advancedphotonsource.github.io/GSAS-II-tutorials/LabData/Laboratory X.htm",
+        "https://briantoby.github.io/PowderCrystallography/HTML-templatese64.html"
+      ]
+    },
+    {
+      "id": 8,
+      "category": "Rietveld",
+      "question": "What is Le Bail intensity extraction and how does it differ from Rietveld refinement?",
+      "ground_truth_urls": [
+        "https://advancedphotonsource.github.io/GSAS-II-tutorials/LeBail/LeBailSucrose.htm"
+      ]
+    },
+    {
+      "id": 9,
+      "category": "Rietveld",
+      "question": "How do I refine atom positions and isotropic displacement parameters in GSAS-II?",
+      "ground_truth_urls": [
+        "https://advancedphotonsource.github.io/GSAS-II-tutorials/LabData/Laboratory X.htm",
+        "https://advancedphotonsource.github.io/GSAS-II-tutorials/help/phaseatoms.html",
+        "https://advancedphotonsource.github.io/GSAS-II-tutorials/help/phasegeneral.html",
+        "https://briantoby.github.io/PowderCrystallography/HTML-templatese141.html"
+      ]
+    },
+    {
+      "id": 10,
+      "category": "Rietveld",
+      "question": "How do I use rigid bodies in a Rietveld refinement?",
+      "ground_truth_urls": [
+        "https://advancedphotonsource.github.io/GSAS-II-tutorials/RigidBody/RigidBodyRef.html",
+        "https://advancedphotonsource.github.io/GSAS-II-tutorials/help/phaseRB.html"
+      ]
+    },
+    {
+      "id": 11,
+      "category": "Sequential",
+      "question": "How do I set up a sequential Rietveld refinement for a temperature series in GSAS-II?",
+      "ground_truth_urls": [
+        "https://advancedphotonsource.github.io/GSAS-II-tutorials/SeqRefine/SequentialTutorial.htm",
+        "https://briantoby.github.io/PowderCrystallography/HTML-templatese81.html"
+      ]
+    },
+    {
+      "id": 12,
+      "category": "Sequential",
+      "question": "How do I use parametric fitting to model lattice parameters versus temperature in sequential refinement?",
+      "ground_truth_urls": [
+        "https://advancedphotonsource.github.io/GSAS-II-tutorials/SeqParametric/ParametricFitting.htm"
+      ]
+    },
+    {
+      "id": 13,
+      "category": "Sequential",
+      "question": "How do I plot results from a sequential refinement, such as lattice parameters versus dataset number?",
+      "ground_truth_urls": [
+        "https://advancedphotonsource.github.io/GSAS-II-tutorials/SeqRefine/SequentialTutorial.htm"
+      ]
+    },
+    {
+      "id": 14,
+      "category": "Sequential",
+      "question": "What are pseudo-variables in GSAS-II sequential fitting and how do I define them?",
+      "ground_truth_urls": [
+        "https://advancedphotonsource.github.io/GSAS-II-tutorials/SeqParametric/ParametricFitting.htm"
+      ]
+    },
+    {
+      "id": 15,
+      "category": "Sequential",
+      "question": "How do I copy and fix refinement flags from one dataset to all datasets in a sequential refinement?",
+      "ground_truth_urls": [
+        "https://advancedphotonsource.github.io/GSAS-II-tutorials/SeqRefine/SequentialTutorial.htm"
+      ]
+    },
+    {
+      "id": 16,
+      "category": "Sequential",
+      "question": "How do I do sequential single-peak fitting for TOF data to measure strain?",
+      "ground_truth_urls": [
+        "https://advancedphotonsource.github.io/GSAS-II-tutorials/TOF Sequential Single Peak Fit/TOF Sequential Single Peak Fit.htm"
+      ]
+    },
+    {
+      "id": 17,
+      "category": "Sequential",
+      "question": "How do I perform sequential refinement of small angle X-ray scattering data?",
+      "ground_truth_urls": [
+        "https://advancedphotonsource.github.io/GSAS-II-tutorials/SAseqref/Sequential Refinement of Small Angle Scattering Data.htm"
+      ]
+    },
+    {
+      "id": 18,
+      "category": "Sequential",
+      "question": "How do I load multiple powder datasets for a sequential refinement in GSAS-II?",
+      "ground_truth_urls": [
+        "https://advancedphotonsource.github.io/GSAS-II-tutorials/SeqRefine/SequentialTutorial.htm"
+      ]
+    },
+    {
+      "id": 19,
+      "category": "Structure",
+      "question": "How do I use charge flipping to solve an unknown crystal structure from powder data?",
+      "ground_truth_urls": [
+        "https://advancedphotonsource.github.io/GSAS-II-tutorials/CFjadarite/Charge Flipping in GSAS.htm",
+        "https://advancedphotonsource.github.io/GSAS-II-tutorials/CFsucrose/Charge Flipping - sucrose.htm"
+      ]
+    },
+    {
+      "id": 20,
+      "category": "Structure",
+      "question": "How do I use Monte Carlo simulated annealing for structure determination in GSAS-II?",
+      "ground_truth_urls": [
+        "https://advancedphotonsource.github.io/GSAS-II-tutorials/MCsimanneal/MCSA in GSAS.htm",
+        "https://advancedphotonsource.github.io/GSAS-II-tutorials/help/phasemcsa.html"
+      ]
+    },
+    {
+      "id": 21,
+      "category": "Structure",
+      "question": "How do I determine a magnetic structure using k-vector searching in GSAS-II?",
+      "ground_truth_urls": [
+        "https://advancedphotonsource.github.io/GSAS-II-tutorials/k_vec_tutorial/k_vec_tutorial.html",
+        "https://advancedphotonsource.github.io/GSAS-II-tutorials/SimpleMagnetic/SimpleMagnetic.htm"
+      ]
+    },
+    {
+      "id": 22,
+      "category": "Structure",
+      "question": "How do I solve a structure by charge flipping using single crystal X-ray data?",
+      "ground_truth_urls": [
+        "https://advancedphotonsource.github.io/GSAS-II-tutorials/CFXraySingleCrystal/CFSingleCrystal.htm"
+      ]
+    },
+    {
+      "id": 23,
+      "category": "Structure",
+      "question": "How do I fit stacking fault models for disordered materials like kaolinite?",
+      "ground_truth_urls": [
+        "https://advancedphotonsource.github.io/GSAS-II-tutorials/StackingFaults-II/Stacking Faults II.htm",
+        "https://advancedphotonsource.github.io/GSAS-II-tutorials/StackingFaults-I/Stacking Faults-I.htm"
+      ]
+    },
+    {
+      "id": 24,
+      "category": "Structure",
+      "question": "How do I handle merohedral twinning in a crystal structure refinement?",
+      "ground_truth_urls": [
+        "https://advancedphotonsource.github.io/GSAS-II-tutorials/MerohedralTwins/Merohedral twin refinement in GSAS.htm"
+      ]
+    },
+    {
+      "id": 25,
+      "category": "Calibration",
+      "question": "How do I calibrate an area detector geometry (beam center, tilt, distance) in GSAS-II?",
+      "ground_truth_urls": [
+        "https://advancedphotonsource.github.io/GSAS-II-tutorials/CalibrationTutorial/CalibrationTutorial.html",
+        "https://advancedphotonsource.github.io/GSAS-II-tutorials/2DCalibration/Calibration of an area detector in GSAS.htm"
+      ]
+    },
+    {
+      "id": 26,
+      "category": "Calibration",
+      "question": "How do I determine the X-ray wavelength from a calibration measurement in GSAS-II?",
+      "ground_truth_urls": [
+        "https://advancedphotonsource.github.io/GSAS-II-tutorials/DeterminingWavelength/DeterminingWavelength.html"
+      ]
+    },
+    {
+      "id": 27,
+      "category": "Calibration",
+      "question": "How do I create an instrument parameter file for a constant-wavelength diffractometer?",
+      "ground_truth_urls": [
+        "https://advancedphotonsource.github.io/GSAS-II-tutorials/CWInstDemo/FindProfParamCW.html",
+        "https://advancedphotonsource.github.io/GSAS-II-tutorials/help/powderinst.html",
+        "https://briantoby.github.io/PowderCrystallography/HTML-templatese85.html",
+        "https://briantoby.github.io/PowderCrystallography/HTML-templatese80.html"
+      ]
+    },
+    {
+      "id": 28,
+      "category": "Calibration",
+      "question": "How do I determine peak profile parameters using the fundamental parameters approach?",
+      "ground_truth_urls": [
+        "https://advancedphotonsource.github.io/GSAS-II-tutorials/FPAfit/FPAfit.htm"
+      ]
+    },
+    {
+      "id": 29,
+      "category": "Calibration",
+      "question": "How do I integrate 2D area detector images to produce powder patterns in GSAS-II?",
+      "ground_truth_urls": [
+        "https://advancedphotonsource.github.io/GSAS-II-tutorials/2DIntegration/Integration of area detector data in GSAS.htm",
+        "https://briantoby.github.io/PowderCrystallography/HTML-templatech11.html",
+        "https://briantoby.github.io/PowderCrystallography/HTML-templatese58.html"
+      ]
+    },
+    {
+      "id": 30,
+      "category": "Calibration",
+      "question": "How do I calibrate detector distances for measurements at multiple sample-to-detector distances?",
+      "ground_truth_urls": [
+        "https://advancedphotonsource.github.io/GSAS-II-tutorials/CalibrationTutorial/CalibrationTutorial.html",
+        "https://advancedphotonsource.github.io/GSAS-II-tutorials/DeterminingWavelength/DeterminingWavelength.html"
+      ]
+    },
+    {
+      "id": 31,
+      "category": "Scripting",
+      "question": "How do I write a Python script to run a GSAS-II Rietveld refinement programmatically?",
+      "ground_truth_urls": [
+        "https://advancedphotonsource.github.io/GSAS-II-tutorials/PythonScript/Scripting.htm"
+      ]
+    },
+    {
+      "id": 32,
+      "category": "Scripting",
+      "question": "How do I run a GSAS-II refinement from the command line without the GUI?",
+      "ground_truth_urls": [
+        "https://advancedphotonsource.github.io/GSAS-II-tutorials/PythonScript/CommandLine.htm",
+        "https://gsas-ii.readthedocs.io/en/latest/GSASIIscriptable.html"
+      ]
+    },
+    {
+      "id": 33,
+      "category": "Scripting",
+      "question": "How do I access and read back refinement results (lattice parameters, Rwp) from a GSAS-II script?",
+      "ground_truth_urls": [
+        "https://advancedphotonsource.github.io/GSAS-II-tutorials/PythonScript/Scripting.htm",
+        "https://gsas-ii.readthedocs.io/en/latest/GSASIIscripts.html"
+      ]
+    },
+    {
+      "id": 34,
+      "category": "Scripting",
+      "question": "What Python API functions are available for loading data and adding phases in GSAS-II scripting?",
+      "ground_truth_urls": [
+        "https://gsas-ii.readthedocs.io/en/latest/GSASIIscripts.html",
+        "https://advancedphotonsource.github.io/GSAS-II-tutorials/PythonScript/Scripting.htm"
+      ]
+    },
+    {
+      "id": 35,
+      "category": "Scripting",
+      "question": "How do I use parameter limits in a GSAS-II scripted refinement to prevent parameters going out of bounds?",
+      "ground_truth_urls": [
+        "https://advancedphotonsource.github.io/GSAS-II-tutorials/ParameterLimits/ParameterLimitsUse.html"
+      ]
+    },
+    {
+      "id": 36,
+      "category": "Export",
+      "question": "How do I create a CIF file for publication from a completed GSAS-II refinement?",
+      "ground_truth_urls": [
+        "https://advancedphotonsource.github.io/GSAS-II-tutorials/CIFtutorial/CIFtutorial.html"
+      ]
+    },
+    {
+      "id": 37,
+      "category": "Export",
+      "question": "How do I export powder diffraction data (d-spacing, intensity) from GSAS-II?",
+      "ground_truth_urls": [
+        "https://advancedphotonsource.github.io/GSAS-II-tutorials/help/powder.html",
+        "https://briantoby.github.io/PowderCrystallography/HTML-templatech15.html"
+      ]
+    },
+    {
+      "id": 38,
+      "category": "Export",
+      "question": "How do I save a GSAS-II Rietveld plot as a PDF or image for a publication?",
+      "ground_truth_urls": [
+        "https://advancedphotonsource.github.io/GSAS-II-tutorials/RietPlot/PublicationPlot.htm"
+      ]
+    },
+    {
+      "id": 39,
+      "category": "Export",
+      "question": "How do I export sequential refinement results to a spreadsheet or text file?",
+      "ground_truth_urls": [
+        "https://advancedphotonsource.github.io/GSAS-II-tutorials/SeqRefine/SequentialTutorial.htm"
+      ]
+    },
+    {
+      "id": 40,
+      "category": "Export",
+      "question": "How do I simulate a powder diffraction pattern and export it in GSAS-II?",
+      "ground_truth_urls": [
+        "https://advancedphotonsource.github.io/GSAS-II-tutorials/Simulation/SimTutorial.htm"
+      ]
+    }
+  ]
+}

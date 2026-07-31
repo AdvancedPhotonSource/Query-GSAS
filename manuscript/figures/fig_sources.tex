@@ -1,0 +1,43 @@
+% Sources breakdown bar chart
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+  xbar,
+  width=10cm, height=7cm,
+  bar width=12pt,
+  xlabel={Number of HTML pages / sources},
+  ytick={1,2,3,4,5,6},
+  yticklabels={
+    Powder Cryst.\ book (opt.),
+    Programmer's Guide,
+    Help manual,
+    Home / Install / Dev,
+    Tutorials (dynamic),
+    --- total default ---
+  },
+  yticklabel style={font=\small},
+  xmin=0, xmax=215,
+  xtick={0,25,50,75,100,125,150,175,200},
+  nodes near coords,
+  nodes near coords align={horizontal},
+  every node near coord/.style={font=\small},
+  axis lines*=left,
+  tick align=outside,
+  enlarge y limits=0.15,
+]
+\addplot[fill=argblue!70, draw=argblue]
+  coordinates {(65,5) (22,4) (42,3) (23,2) (179,1)};
+\addplot[fill=apsorange!70, draw=apsorange,
+  nodes near coords style={xshift=2pt}]
+  coordinates {(152,6)};
+\end{axis}
+\end{tikzpicture}
+\caption{Documentation sources indexed by \textit{Query-GSAS} by category.
+  Blue bars show the default index (152 HTML sources).
+  The \textit{Powder Diffraction Crystallography} textbook (179 HTML pages,
+  orange) is included via \texttt{--book} and not indexed by default.
+  Tutorials are resolved dynamically from the GSAS-II repository at
+  ingest time.}
+\label{fig:sources}
+\end{figure}

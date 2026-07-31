@@ -218,13 +218,13 @@ def main():
                         help="Include Programmers' Manual (24 HTML chapters)")
     args = parser.parse_args()
 
-    from chromadb.utils.embedding_functions import DefaultEmbeddingFunction
+    from ._embed import get_embedding_function
     from .sources import get_tutorial_sources
     from .sources import HOME_SOURCES, HELP_SOURCES, TUTORIAL_SOURCES
     from .sources import READTHEDOCS_SOURCES, get_book_sources
 
-    print("Loading embedding model (ONNX all-MiniLM-L6-v2)...")
-    model = DefaultEmbeddingFunction()
+    print("Loading embedding model...")
+    model = get_embedding_function()
 
     print(f"ChromaDB path: {get_chroma_path()}")
     collection = get_collection(reset=args.reset)

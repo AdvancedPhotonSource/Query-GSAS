@@ -1,0 +1,76 @@
+% System architecture figure — compile standalone or \input into main.tex
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[
+  node distance = 1.4cm and 2.2cm,
+  box/.style  = {rectangle, rounded corners=5pt, draw=#1, fill=#1!10,
+                 minimum width=2.8cm, minimum height=0.9cm,
+                 font=\small\sffamily, align=center, thick},
+  arr/.style  = {-{Stealth[length=6pt]}, thick, #1},
+  lbl/.style  = {font=\footnotesize\sffamily\itshape},
+]
+
+% ── Left: Ingestion path ──────────────────────────────────────────────────────
+\node[box=argblue, minimum width=3.6cm] (sources)
+  {GSAS-II docs\\{\tiny 152 HTML (+179 book, opt.)}};
+
+\node[box=argblue, below=of sources] (fetch)
+  {Fetch \&\\Parse};
+
+\node[box=argblue, below=of fetch] (chunk)
+  {Chunk\\($\le$1200 chars)};
+
+\node[box=argblue, below=of chunk] (embed)
+  {Embed\\{\tiny bge-base-en-v1.5}};
+
+\node[box=gray,   below=of embed,  minimum width=3.6cm] (chroma)
+  {ChromaDB\\{\tiny 5{,}838 vectors}};
+
+% ── Right: Query path ─────────────────────────────────────────────────────────
+\node[box=apsorange, right=3.8cm of sources, minimum width=3.2cm] (user)
+  {User question};
+
+\node[box=apsorange, below=of user] (qembed)
+  {Embed query\\{\tiny bge-base-en-v1.5}};
+
+\node[box=apsorange, below=of qembed] (retrieve)
+  {Retrieve top-6\\{\tiny cosine sim + URL dedup}};
+
+\node[box=apsorange, below=of retrieve] (llm)
+  {LLM generation\\{\tiny Ollama / llama-cpp-python}};
+
+\node[box=apsorange, below=of llm, minimum width=3.2cm] (answer)
+  {Cited answer\\{\tiny + source links [1..6]}};
+
+% ── Arrows: ingestion ─────────────────────────────────────────────────────────
+\draw[arr=argblue] (sources) -- (fetch);
+\draw[arr=argblue] (fetch)   -- (chunk);
+\draw[arr=argblue] (chunk)   -- (embed);
+\draw[arr=argblue] (embed)   -- (chroma);
+
+% ── Arrows: query ─────────────────────────────────────────────────────────────
+\draw[arr=apsorange] (user)     -- (qembed);
+\draw[arr=apsorange] (qembed)   -- (retrieve);
+\draw[arr=apsorange] (retrieve) -- (llm);
+\draw[arr=apsorange] (llm)      -- (answer);
+
+% ── Cross arrow: DB → retrieve ────────────────────────────────────────────────
+\draw[arr=black!60, dashed]
+  (chroma.east) -- ++(0.6,0) |- (retrieve.west);
+
+% ── Labels ────────────────────────────────────────────────────────────────────
+\node[lbl, above=0.15cm of sources] {Ingestion (one-time)};
+\node[lbl, above=0.15cm of user]    {Query (real-time)};
+
+\end{tikzpicture}
+\caption{\textit{Query-GSAS} system architecture.
+  \textit{Left (blue):} The one-time ingestion pipeline fetches, parses,
+  chunks, and embeds the GSAS-II documentation corpus into a local
+  ChromaDB vector store using the \texttt{bge-base-en-v1.5} ONNX model.
+  \textit{Right (orange):} At query time, the user's question is embedded
+  with the same model; the top-30 candidates are retrieved by cosine
+  similarity, deduplicated to one chunk per source URL, and the six
+  most relevant are forwarded to an LLM for cited answer synthesis.
+  All computation runs on the local machine.}
+\label{fig:architecture}
+\end{figure}
