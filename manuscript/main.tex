@@ -1,0 +1,116 @@
+\documentclass[12pt,a4paper]{article}
+
+% ── Packages ──────────────────────────────────────────────────────────────────
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\PassOptionsToPackage{hyphens}{url}
+\usepackage{hyperref}
+\usepackage{xurl}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{enumitem}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usetikzlibrary{shapes.geometric, arrows.meta, positioning, fit, backgrounds, calc}
+\usepackage[numbers,sort&compress]{natbib}
+\usepackage{microtype}
+\usepackage{lineno}
+\usepackage{setspace}
+\doublespacing
+
+\definecolor{argblue}{RGB}{26,79,138}
+\definecolor{apsorange}{RGB}{232,119,34}
+\definecolor{codegray}{RGB}{245,245,245}
+
+\lstset{
+  basicstyle=\ttfamily\small,
+  backgroundcolor=\color{codegray},
+  frame=single,
+  framesep=4pt,
+  breaklines=true,
+  columns=fullflexible,
+}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=argblue,
+  citecolor=argblue,
+  urlcolor=argblue,
+  breaklinks=true,
+}
+
+% ── Title block ────────────────────────────────────────────────────────────────
+\title{\textbf{Query-GSAS: A Local Retrieval-Augmented Generation System
+       for Intelligent Access to GSAS-II Documentation}}
+
+\author{
+  Pawan K. Tripathi$^{\ast}$ \and
+  Mathew J.\ Cherukara \and
+  Brian H.\ Toby$^{\ast}$
+}
+
+\date{
+  X-ray Science Division, Advanced Photon Source,
+  Argonne National Laboratory, Lemont, IL 60439, USA \\[4pt]
+  $^{\ast}$Correspondence: \href{mailto:ptripathi@anl.gov,toby@anl.gov}{ptripathi@anl.gov, toby@anl.gov}
+}
+
+% ── Document ───────────────────────────────────────────────────────────────────
+\begin{document}
+
+\maketitle
+\linenumbers
+
+\begin{abstract}
+  \input{sections/abstract}
+\end{abstract}
+
+\noindent\textbf{Keywords:} retrieval-augmented generation; GSAS-II;
+powder diffraction; Rietveld refinement; large language models;
+crystallographic software; documentation
+
+\clearpage
+
+\input{sections/introduction}
+\input{sections/methods}
+
+% Architecture figure
+\input{figures/fig_architecture}
+\input{figures/fig_sources}
+
+\input{sections/results}
+
+% Results figures
+\input{figures/fig_recall}
+\input{figures/placeholders}
+
+\input{sections/discussion}
+\input{sections/conclusion}
+
+\section*{Acknowledgements}
+The authors thank the GSAS-II development community and the users who
+provided feedback during early testing.
+This work was supported by the U.S.\ Department of Energy, Office of
+Science, Advanced Scientific Computing Research, and Basic Energy
+Sciences, under Contract No.\ DE-AC02-06CH11357.
+This research used resources of the Advanced Photon Source, a
+U.S.\ Department of Energy Office of Science user facility operated
+by Argonne National Laboratory under the same contract.
+
+\section*{Data availability}
+\textit{Query-GSAS} is open source and freely available at GitHub
+under the MIT license (\url{https://github.com/AdvancedPhotonSource/Query-GSAS})
+and as a PyPI package (\texttt{pip install gsas-query}).
+The pre-built documentation index can be regenerated in full from
+publicly available GSAS-II documentation pages using the provided
+ingestion pipeline.
+
+\bibliographystyle{unsrtnat}
+\bibliography{references}
+
+\end{document}
