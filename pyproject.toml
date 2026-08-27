@@ -3,9 +3,9 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "gsas-query"
-version = "0.2.4"
-description = "GSAS-II Documentation Assistant — semantic search and AI answers over GSAS-II tutorials and help pages"
+name = "gsas2-query"
+version = "0.3.0"
+description = "Query-GSAS-II Documentation Assistant — semantic search and AI answers over GSAS-II tutorials and help pages"
 readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.10"
@@ -42,11 +42,11 @@ gui       = ["wxPython>=4.2.0"]
 dev       = ["pytest>=8.0"]
 
 [project.scripts]
-gsas-query     = "gsas_query.cli:main"
-gsas-query-web = "gsas_query._web:main"
+gsas2-query     = "gsas_query.cli:main"
+gsas2-query-web = "gsas_query._web:main"
 
 [project.urls]
-Repository = "https://github.com/pawantr/Query-GSAS"
+Repository = "https://github.com/AdvancedPhotonSource/Query-GSAS-II"
 
 [tool.hatch.build.targets.wheel]
 packages = ["gsas_query"]
