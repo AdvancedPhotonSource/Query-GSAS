@@ -1,8 +1,8 @@
-# Query-GSAS Retrieval Evaluation Case Study
+# Query-GSAS-II Retrieval Evaluation Case Study
 
 ## Experiment overview
 
-Evaluation of the Query-GSAS RAG retrieval pipeline against a held-out set of 40 expert-authored questions covering the major GSAS-II workflow categories. Two configurations are compared: the original `all-MiniLM-L6-v2` embedding model and the upgraded `BAAI/bge-base-en-v1.5` model with URL-diversity deduplication.
+Evaluation of the Query-GSAS-II RAG retrieval pipeline against a held-out set of 40 expert-authored questions covering the major GSAS-II workflow categories. Two configurations are compared: the original `all-MiniLM-L6-v2` embedding model and the upgraded `BAAI/bge-base-en-v1.5` model with URL-diversity deduplication.
 
 ---
 

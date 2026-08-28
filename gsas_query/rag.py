@@ -269,7 +269,7 @@ def answer_question(question: str, history: list[dict]) -> dict:
     if not context:
         return {
             "answer": (
-                "The knowledge base is empty. Run `gsas-query --setup` "
+                "The knowledge base is empty. Run `gsas2-query --setup` "
                 "to index the GSAS-II documentation."
             ),
             "sources": [],

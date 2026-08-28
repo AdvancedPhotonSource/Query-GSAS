@@ -1,4 +1,4 @@
-# gsas-query — GSAS-II Documentation Assistant
+# gsas2-query — GSAS-II Documentation Assistant
 
 Semantic search + AI answers over the full GSAS-II documentation set:
 **129 HTML pages** (home, help, and all 62 tutorials) plus the
@@ -17,33 +17,33 @@ unless you explicitly choose the Anthropic API backend.
 ### pip
 
 ```bash
-pip install gsas-query
+pip install gsas2-query
 ```
 
 Or install directly from source:
 
 ```bash
-pip install git+https://github.com/pawantr/Query-GSAS.git
+pip install git+https://github.com/AdvancedPhotonSource/Query-GSAS-II.git
 ```
 
 ### conda
 
 ```bash
-conda install -c conda-forge gsas-query
+conda install -c conda-forge gsas2-query
 ```
 
 ### Into an existing GSAS-II environment
 
 ```bash
 # Activate the GSAS-II conda environment first, then:
-pip install gsas-query
+pip install gsas2-query
 ```
 
 ### Development / editable install
 
 ```bash
-git clone https://github.com/pawantr/Query-GSAS.git
-cd Query-GSAS
+git clone https://github.com/AdvancedPhotonSource/Query-GSAS-II.git
+cd Query-GSAS-II
 pip install -e ".[dev]"
 ```
 
@@ -66,7 +66,7 @@ Other model options: `llama3:70b` (better quality, ~40 GB), `mistral` (faster, ~
 `llama-cpp-python` runs a GGUF model directly inside the Python process — no
 separate server required. It is cross-platform and available from conda-forge.
 
-When `llama-cpp-python` is importable, gsas-query selects it **automatically**
+When `llama-cpp-python` is importable, gsas2-query selects it **automatically**
 without any `LLM_BACKEND` setting.
 
 ### Install
@@ -74,7 +74,7 @@ without any `LLM_BACKEND` setting.
 ```bash
 conda install -c conda-forge llama-cpp-python   # recommended
 # or:
-pip install "gsas-query[llama_cpp]"
+pip install "gsas2-query[llama_cpp]"
 ```
 
 ### Download a GGUF model
@@ -108,9 +108,9 @@ By default the index is stored in `~/.GSASII/gsas_query/chroma_db`
 (see [User data directory](#userdatadirectory) for details).
 
 ```bash
-gsas-query --setup              # all sources (HTML + PDFs)
-gsas-query --setup --html-only  # skip PDFs, faster (~5 min)
-gsas-query --setup --reset      # drop index and rebuild from scratch
+gsas2-query --setup              # all sources (HTML + PDFs)
+gsas2-query --setup --html-only  # skip PDFs, faster (~5 min)
+gsas2-query --setup --reset      # drop index and rebuild from scratch
 ```
 
 HTML-only index is 21 Mb. With GSAS-II Programmer's Guide, 41 Mb; with
@@ -123,9 +123,9 @@ textbook as well, 53 Mb.
 ### Command-line — single question
 
 ```bash
-gsas-query "How do I set up a sequential refinement?"
-gsas-query "What parameters control the background in Rietveld?"
-gsas-query "How do I export a CIF for publication?"
+gsas2-query "How do I set up a sequential refinement?"
+gsas2-query "What parameters control the background in Rietveld?"
+gsas2-query "How do I export a CIF for publication?"
 ```
 
 ### Command-line — interactive REPL
@@ -133,7 +133,7 @@ gsas-query "How do I export a CIF for publication?"
 Multi-turn conversation that remembers previous questions in the session.
 
 ```bash
-gsas-query
+gsas2-query
 ```
 
 ```
@@ -162,7 +162,7 @@ Commands inside the REPL: `clear` (reset history), `quit` / `exit` (exit).
 Opens a standalone floating dialog — stays open while you work in GSAS-II.
 
 ```bash
-gsas-query --gui
+gsas2-query --gui
 ```
 
 ### Embed in GSAS-II Help menu
@@ -177,7 +177,7 @@ def OnDocAssistant(self, event):
     except ImportError:
         wx.MessageBox(
             "GSAS-II Assistant not installed.\n"
-            "Run: pip install gsas-query",
+            "Run: pip install gsas2-query",
             "Not available"
         )
 ```
@@ -188,8 +188,8 @@ window rather than opening a duplicate.
 ### Web UI
 
 ```bash
-gsas-query-web                          # serves on 0.0.0.0:8000
-HOST=127.0.0.1 PORT=8765 gsas-query-web
+gsas2-query-web                          # serves on 0.0.0.0:8000
+HOST=127.0.0.1 PORT=8765 gsas2-query-web
 ```
 
 Then open `http://localhost:8000` in a browser. The web UI shows inline citations
@@ -227,9 +227,9 @@ Backend selection precedence:
 | `retrieval` | — | No LLM — returns raw matched chunks; useful offline or for testing |
 
 ```bash
-gsas-query --backend retrieval "What is Le Bail extraction?"
-gsas-query --backend ollama --model mistral "How do I index peaks?"
-gsas-query --backend llama_cpp --model /path/to/model.gguf "How do I refine a structure?"
+gsas2-query --backend retrieval "What is Le Bail extraction?"
+gsas2-query --backend ollama --model mistral "How do I index peaks?"
+gsas2-query --backend llama_cpp --model /path/to/model.gguf "How do I refine a structure?"
 ```
 
 ---
@@ -264,7 +264,7 @@ The book PDF is fetched from the latest GitHub release of
 ## Re-indexing when docs update
 
 ```bash
-gsas-query --setup --reset
+gsas2-query --setup --reset
 ```
 
 Or trigger via the web API (requires `ADMIN_KEY` set in `.env`):
@@ -294,5 +294,5 @@ The ChromaDB index is stored at `~/.GSASII/gsas_query/chroma_db` by default.
 Override with the `GSAS_QUERY_DATA_DIR` environment variable:
 
 ```bash
-GSAS_QUERY_DATA_DIR=/data/gsas_query gsas-query --setup
+GSAS_QUERY_DATA_DIR=/data/gsas_query gsas2-query --setup
 ```

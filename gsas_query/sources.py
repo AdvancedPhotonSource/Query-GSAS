@@ -361,7 +361,7 @@ PDF_SOURCES = []  # Book and Programmer's Guide now available as HTML
 
 # ── Powder Diffraction Crystallography book — 185 HTML pages (Brian Toby) ─────
 # https://briantoby.github.io/PowderCrystallography/
-# Pages are accessible by direct URL; include via `gsas-query --setup --book`.
+# Pages are accessible by direct URL; include via `gsas2-query --setup --book`.
 
 _BOOK_BASE = "https://briantoby.github.io/PowderCrystallography"
 
@@ -448,7 +448,7 @@ def get_tutorial_sources():
 
     try:
         req = urllib.request.Request(
-            _TUTORIAL_INDEX_URL, headers={"User-Agent": "gsas-query"}
+            _TUTORIAL_INDEX_URL, headers={"User-Agent": "gsas2-query"}
         )
         with urllib.request.urlopen(req, timeout=10) as resp:
             content = resp.read().decode()
