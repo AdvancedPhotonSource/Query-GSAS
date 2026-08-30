@@ -19,7 +19,7 @@ on:
 jobs:
   ingest:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 90
     permissions:
       #contents: read
       contents: write   # changed: needed to create/update release/tag
@@ -37,10 +37,17 @@ jobs:
           path: ~/.cache/pip
           key: pip-ingest-${{ hashFiles('pyproject.toml') }}
 
-      # Embeddings use chromadb's built-in ONNX runtime (all-MiniLM-L6-v2)
-      # so PyTorch and sentence-transformers are not required.
+      - name: Cache fastembed ONNX model
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/fastembed
+          key: fastembed-bge-base-en-v1.5
+
       - name: Install gsas_query package
         run: pip install -e ".[dev]"
+
+      - name: Warm up fastembed model (populates cache if cold)
+        run: python -c "from fastembed import TextEmbedding; TextEmbedding('BAAI/bge-base-en-v1.5')"
 
       - name: Build ChromaDB index (HTML only, contents by options)
         env:
