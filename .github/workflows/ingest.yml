@@ -105,6 +105,6 @@ jobs:
           body: Auto-updated ChromaDB index artifact from ingest workflow.
           files: chroma_db_latest.zip
           overwrite_files: true
-          make_latest: true
+          make_latest: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
