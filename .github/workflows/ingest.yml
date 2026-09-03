@@ -5,6 +5,8 @@ name: Build ChromaDB index
 # (as well as a artifact)
 
 on:
+  schedule:
+    - cron: "0 4 * * 1"   # every Monday 04:00 UTC — full rebuild with book+manual
   workflow_dispatch:
     inputs:
       include_book:
@@ -58,10 +60,14 @@ jobs:
           GSAS_QUERY_DATA_DIR: ${{ github.workspace }}/ci_data
         run: |
           cmd="python ingest.py --html-only"
-          if [ "${{ inputs.include_book }}" = "true" ]; then
+          # Scheduled runs (no inputs) always include book+manual for a full rebuild.
+          # Manual dispatch respects the checkboxes.
+          include_book="${{ inputs.include_book }}"
+          include_manual="${{ inputs.include_manual }}"
+          if [ "${{ github.event_name }}" = "schedule" ] || [ "${include_book:-true}" = "true" ]; then
             cmd="$cmd --book"
           fi
-          if [ "${{ inputs.include_manual }}" = "true" ]; then
+          if [ "${{ github.event_name }}" = "schedule" ] || [ "${include_manual:-true}" = "true" ]; then
             cmd="$cmd --manual"
           fi
           echo "Running: $cmd"
