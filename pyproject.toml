@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "gsas2-query"
-version = "0.3.0"
+version = "0.3.1"
 description = "Query-GSAS-II Documentation Assistant — semantic search and AI answers over GSAS-II tutorials and help pages"
 readme = "README.md"
 license = { text = "MIT" }
@@ -23,7 +23,7 @@ classifiers = [
 ]
 dependencies = [
     "chromadb>=0.5.0",
-    "fastembed>=0.3.0",
+    "tokenizers>=0.15.0",
     "beautifulsoup4>=4.12.0",
     "requests>=2.31.0",
     "pypdf>=4.0.0",

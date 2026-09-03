@@ -186,6 +186,25 @@ Note: the bge-base evaluation was run against the **with-book** index (5,838 chu
 
 ---
 
+## Extended embedding model survey (2026-08-31)
+
+Six models evaluated on the same 40-question set against the full index (5,854 chunks, with book). All models run via fastembed ONNX; no PyTorch required. Evaluated with the same numpy cosine search + URL-deduplication pipeline.
+
+| Model | Dim | R@1 | R@3 | R@6 | MRR |
+|---|---|---|---|---|---|
+| **bge-base-en-v1.5** (production) | 768 | **0.500** | **0.825** | **0.975** | **0.661** |
+| nomic-embed-text-v1.5 | 768 | 0.400 | 0.725 | 0.875 | 0.573 |
+| mxbai-embed-large-v1 | 1024 | 0.425 | 0.650 | 0.875 | 0.579 |
+| nomic-embed-text-v1 | 768 | 0.350 | 0.675 | 0.850 | 0.526 |
+| snowflake-arctic-embed-l | 1024 | 0.100 | 0.150 | 0.200 | 0.133 |
+| snowflake-arctic-embed-m | 768 | 0.075 | 0.175 | 0.275 | 0.145 |
+
+**Conclusion: bge-base-en-v1.5 remains the best model across all metrics.** The R@6 gap over the next-best alternatives (nomic-v1.5 and mxbai) is 10 percentage points. Arctic models performed far below baseline, ruling them out entirely. No reason to switch from the current production model.
+
+Full results saved in `eval_results_arctic.json`.
+
+---
+
 ## Verified index statistics (use for manuscript)
 
 | Quantity | Verified value |
